@@ -1,6 +1,7 @@
 const express              = require('express');
 const router               = express.Router();
 const laporanController    = require('../controllers/laporanController');
+const pdfController        = require('../controllers/pdfController');
 const { isAuthenticated }  = require('../middlewares/auth');
 const { checkPermission }  = require('../middlewares/acl');
 const { uploadLaporan }    = require('../middlewares/upload');
@@ -34,6 +35,13 @@ router.post('/',
   checkPermission('laporan.create'),
   multerGuard(uploadLaporan.single('foto')),
   laporanController.store
+);
+
+// GET /laporan/:id/pdf — Download PDF bukti laporan (harus SEBELUM /:id)
+router.get('/:id/pdf',
+  isAuthenticated,
+  checkPermission('laporan.view_own'),
+  pdfController.buktiLaporan
 );
 
 router.get('/:id',

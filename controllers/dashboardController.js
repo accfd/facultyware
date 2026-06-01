@@ -35,14 +35,14 @@ const index = async (req, res, next) => {
     `);
 
     res.render('dashboard', {
-      title:          'Dashboard',
-      userName:       req.session.userName,
-      userRole:       req.session.userRole,
+      title: 'Dashboard',
+      userName: req.session.userName,
+      userRole: req.session.userRole,
       totalCount,
       stats,
       maintenanceCount,
       recentLaporan,
-      flash:          req.session.flash || null,
+      flash: req.session.flash || null,
     });
 
     // Hapus flash setelah dirender

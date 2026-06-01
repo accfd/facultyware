@@ -1,0 +1,150 @@
+<%- include('../../partials/header', {
+  title:       'Buat Permohonan Maintenance',
+  currentPath: '/maintenance',
+  userRole:    typeof userRole !== 'undefined' ? userRole : '',
+  userName:    typeof userName !== 'undefined' ? userName : '',
+  flash:       typeof flash !== 'undefined' ? flash : null
+}) %>
+
+<%
+  const _laporan   = typeof laporan   !== 'undefined' ? laporan   : [];
+  const _pengelola = typeof pengelola !== 'undefined' ? pengelola : [];
+  const _errors    = typeof errors !== 'undefined' && errors ? errors : [];
+  const _old       = typeof old !== 'undefined' ? old : {};
+
+  function fieldError(field) {
+    const e = _errors.find(function(er) { return er.field === field; });
+    return e ? e.msg : null;
+  }
+  function fmtDate(d) {
+    if (!d) return '';
+    return new Date(d).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' });
+  }
+  function trunc(s, n) {
+    if (!s) return '';
+    return s.length > n ? s.substring(0, n) + '…' : s;
+  }
+%>
+
+<!-- Breadcrumb -->
+<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted-foreground);margin-bottom:20px;">
+  <a href="/maintenance" style="color:var(--muted-foreground);text-decoration:none;">Permohonan Maintenance</a>
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+  <span style="color:var(--foreground);">Buat Permohonan</span>
+</div>
+
+<div style="max-width:660px;">
+  <div style="margin-bottom:20px;">
+    <h1 style="font-size:20px;font-weight:700;margin-bottom:4px;">Buat Permohonan Maintenance</h1>
+    <p style="font-size:13px;color:var(--muted-foreground);">Pilih laporan dan pengelola untuk memulai proses perbaikan.</p>
+  </div>
+
+  <!-- Error summary -->
+  <% if (_errors.length > 0) { %>
+  <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:12px 16px;margin-bottom:20px;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span style="font-size:13px;font-weight:600;color:#dc2626;">Harap perbaiki kesalahan berikut:</span>
+    </div>
+    <ul style="margin:0;padding-left:20px;">
+      <% _errors.forEach(function(e) { %><li style="font-size:13px;color:#dc2626;"><%= e.msg %></li><% }); %>
+    </ul>
+  </div>
+  <% } %>
+
+  <!-- Info jika tidak ada laporan tersedia -->
+  <% if (_laporan.length === 0) { %>
+  <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:14px 16px;margin-bottom:20px;display:flex;align-items:flex-start;gap:10px;">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a16207" stroke-width="2" style="flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <div>
+      <p style="font-size:13px;font-weight:600;color:#a16207;margin-bottom:2px;">Tidak ada laporan yang tersedia</p>
+      <p style="font-size:13px;color:#a16207;margin:0;">Semua laporan sudah dalam proses atau belum ada laporan baru yang masuk.</p>
+    </div>
+  </div>
+  <% } %>
+
+  <div class="card" style="padding:28px;">
+    <form method="POST" action="/maintenance" id="maintenanceForm">
+
+      <!-- Pilih Laporan -->
+      <div style="margin-bottom:24px;">
+        <label for="laporan_id" style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">
+          Laporan Kerusakan <span style="color:#dc2626;">*</span>
+        </label>
+        <% if (_laporan.length === 0) { %>
+        <div style="padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--muted);font-size:13px;color:var(--muted-foreground);">
+          Tidak ada laporan dengan status "Dilaporkan" saat ini.
+        </div>
+        <% } else { %>
+        <select id="laporan_id" name="laporan_id"
+                style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid <%= fieldError('laporan_id') ? '#fca5a5' : 'var(--border)' %>;
+                       background:var(--background);color:var(--foreground);font-size:14px;outline:none;cursor:pointer;box-sizing:border-box;">
+          <option value="">-- Pilih Laporan --</option>
+          <% _laporan.forEach(function(l) { %>
+          <option value="<%= l.id %>" <%= String(l.id) === String(_old.laporan_id) ? 'selected' : '' %>>
+            #<%= String(l.id).padStart(4,'0') %> — <%= l.room_name %> · <%= trunc(l.issue_description, 50) %> (<%= fmtDate(l.reported_at) %>)
+          </option>
+          <% }); %>
+        </select>
+        <% if (fieldError('laporan_id')) { %>
+        <p style="font-size:12px;color:#dc2626;margin-top:4px;"><%= fieldError('laporan_id') %></p>
+        <% } %>
+        <% } %>
+      </div>
+
+      <!-- Pilih Pengelola Aset -->
+      <div style="margin-bottom:28px;">
+        <label for="pengelola_id" style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">
+          Pengelola Aset <span style="color:#dc2626;">*</span>
+        </label>
+        <% if (_pengelola.length === 0) { %>
+        <div style="padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--muted);font-size:13px;color:var(--muted-foreground);">
+          Tidak ada pengelola aset terdaftar. Hubungi administrator.
+        </div>
+        <% } else { %>
+        <select id="pengelola_id" name="pengelola_id"
+                style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid <%= fieldError('pengelola_id') ? '#fca5a5' : 'var(--border)' %>;
+                       background:var(--background);color:var(--foreground);font-size:14px;outline:none;cursor:pointer;box-sizing:border-box;">
+          <option value="">-- Pilih Pengelola Aset --</option>
+          <% _pengelola.forEach(function(p) { %>
+          <option value="<%= p.id %>" <%= String(p.id) === String(_old.pengelola_id) ? 'selected' : '' %>>
+            <%= p.name %>
+          </option>
+          <% }); %>
+        </select>
+        <% if (fieldError('pengelola_id')) { %>
+        <p style="font-size:12px;color:#dc2626;margin-top:4px;"><%= fieldError('pengelola_id') %></p>
+        <% } %>
+        <% } %>
+      </div>
+
+      <!-- Info box -->
+      <div style="background:var(--muted);border-radius:8px;padding:12px 14px;margin-bottom:24px;font-size:13px;color:var(--muted-foreground);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             style="display:inline;vertical-align:middle;margin-right:6px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Setelah permohonan dikirim, status laporan akan berubah menjadi <strong>"Diproses"</strong>
+        dan pengelola aset yang dipilih akan mendapatkan penugasan perbaikan.
+      </div>
+
+      <!-- Buttons -->
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <a href="/maintenance"
+           style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:6px;font-size:14px;font-weight:500;border:1px solid var(--border);text-decoration:none;color:var(--foreground);background:var(--background);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Batal
+        </a>
+        <button type="submit" class="btn"
+                style="display:inline-flex;align-items:center;gap:6px;padding:8px 20px;font-size:14px;"
+                <%= (_laporan.length === 0 || _pengelola.length === 0) ? 'disabled' : '' %>>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+          </svg>
+          Kirim Permohonan
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<%- include('../../partials/footer') %>

@@ -1,0 +1,178 @@
+<%- include('../partials/header', {
+  title:       'Penugasan Aktif',
+  currentPath: '/penugasan',
+  userRole:    typeof userRole !== 'undefined' ? userRole : '',
+  userName:    typeof userName !== 'undefined' ? userName : '',
+  flash:       typeof flash !== 'undefined' ? flash : null
+}) %>
+
+<%
+  const _data       = typeof penugasan !== 'undefined' ? penugasan : [];
+  const _total      = typeof total !== 'undefined' ? total : 0;
+  const _page       = typeof page  !== 'undefined' ? page  : 1;
+  const _totalPages = typeof totalPages !== 'undefined' ? totalPages : 1;
+  const _search     = typeof search !== 'undefined' ? search : '';
+
+  function fmtDate(d) {
+    if (!d) return '-';
+    return new Date(d).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' });
+  }
+  function trunc(s, n) {
+    if (!s) return '-';
+    return s.length > n ? s.substring(0, n) + '…' : s;
+  }
+  function buildQ(overrides) {
+    const q = Object.assign({ search: _search, page: _page }, overrides);
+    const p = [];
+    if (q.search) p.push('search=' + encodeURIComponent(q.search));
+    if (q.page > 1) p.push('page=' + q.page);
+    return '/penugasan' + (p.length ? '?' + p.join('&') : '');
+  }
+%>
+
+<!-- Page heading -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+  <div>
+    <h1 style="font-size:20px;font-weight:700;margin-bottom:4px;">Penugasan Aktif</h1>
+    <p style="font-size:13px;color:var(--muted-foreground);">
+      Daftar ruangan yang perlu Anda perbaiki
+      <% if (_total > 0) { %>— <strong><%= _total %></strong> penugasan aktif<% } %>
+    </p>
+  </div>
+</div>
+
+<!-- Search -->
+<div class="card" style="padding:16px;margin-bottom:20px;">
+  <form method="GET" action="/penugasan" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+    <div style="flex:1;min-width:200px;">
+      <label style="display:block;font-size:12px;font-weight:600;color:var(--muted-foreground);margin-bottom:5px;">Cari Ruangan</label>
+      <div style="position:relative;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted-foreground);pointer-events:none;">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" name="search" value="<%= _search %>" placeholder="Nama ruangan..."
+               class="input" style="padding-left:32px;height:36px;font-size:13px;width:100%;box-sizing:border-box;"/>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;align-items:flex-end;">
+      <button type="submit" class="btn" style="height:36px;font-size:13px;padding:0 16px;display:inline-flex;align-items:center;gap:6px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Cari
+      </button>
+      <% if (_search) { %>
+      <a href="/penugasan" class="btn-outline"
+         style="height:36px;font-size:13px;padding:0 14px;display:inline-flex;align-items:center;gap:6px;text-decoration:none;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Reset
+      </a>
+      <% } %>
+    </div>
+  </form>
+</div>
+
+<!-- Tabel -->
+<div class="card" style="overflow:hidden;padding:0;">
+  <% if (_data.length === 0) { %>
+  <div style="padding:48px;text-align:center;color:var(--muted-foreground);">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+         style="margin:0 auto 12px;display:block;opacity:.4;">
+      <path d="M9 11l3 3L22 4"/>
+      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+    </svg>
+    <p style="font-size:14px;">
+      <% if (_search) { %>Tidak ada penugasan yang cocok dengan pencarian.<% } else { %>Belum ada penugasan aktif untuk Anda.<% } %>
+    </p>
+    <% if (_search) { %>
+    <a href="/penugasan" class="btn-outline"
+       style="margin-top:12px;display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-size:13px;">
+      Tampilkan Semua
+    </a>
+    <% } %>
+  </div>
+  <% } else { %>
+  <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:13.5px;">
+      <thead>
+        <tr style="border-bottom:1px solid var(--border);background:var(--muted);">
+          <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);white-space:nowrap;">No</th>
+          <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);">Ruangan</th>
+          <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);">Gedung</th>
+          <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);">Deskripsi</th>
+          <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);">Penanggung Jawab</th>
+          <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);white-space:nowrap;">Tgl Laporan</th>
+          <th style="padding:10px 14px;text-align:center;font-weight:600;color:var(--muted-foreground);">Progres</th>
+          <th style="padding:10px 14px;text-align:center;font-weight:600;color:var(--muted-foreground);">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% _data.forEach(function(p, i) {
+          const no = (_page - 1) * 10 + i + 1;
+        %>
+        <tr style="border-bottom:1px solid var(--border);transition:background .1s;"
+            onmouseover="this.style.background='var(--muted)'" onmouseout="this.style.background=''">
+          <td style="padding:12px 14px;color:var(--muted-foreground);"><%= no %></td>
+          <td style="padding:12px 14px;font-weight:500;white-space:nowrap;">
+            <%= p.room_name %>
+          </td>
+          <td style="padding:12px 14px;color:var(--muted-foreground);white-space:nowrap;"><%= p.building_name %></td>
+          <td style="padding:12px 14px;max-width:200px;">
+            <span title="<%= p.issue_description %>"><%= trunc(p.issue_description, 50) %></span>
+          </td>
+          <td style="padding:12px 14px;color:var(--muted-foreground);white-space:nowrap;"><%= p.penanggung_jawab_name %></td>
+          <td style="padding:12px 14px;white-space:nowrap;color:var(--muted-foreground);"><%= fmtDate(p.reported_at) %></td>
+          <td style="padding:12px 14px;text-align:center;">
+            <span style="display:inline-flex;align-items:center;justify-content:center;
+                         min-width:32px;height:28px;padding:0 10px;border-radius:20px;
+                         font-size:12px;font-weight:600;
+                         background:<%= p.jumlah_progres > 0 ? '#faf5ff' : 'var(--muted)' %>;
+                         color:<%= p.jumlah_progres > 0 ? '#7e22ce' : 'var(--muted-foreground)' %>;">
+              <%= p.jumlah_progres %>×
+            </span>
+          </td>
+          <td style="padding:12px 14px;text-align:center;">
+            <a href="/penugasan/<%= p.id %>"
+               style="display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:500;border:1px solid var(--border);color:var(--foreground);text-decoration:none;background:var(--background);">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+              Detail
+            </a>
+          </td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <% if (_totalPages > 1) { %>
+  <div style="padding:14px 16px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+    <span style="font-size:13px;color:var(--muted-foreground);">
+      Menampilkan <%= (_page - 1) * 10 + 1 %>–<%= Math.min(_page * 10, _total) %> dari <%= _total %>
+    </span>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <% if (_page > 1) { %>
+      <a href="<%= buildQ({ page: _page - 1 }) %>"
+         style="display:inline-flex;align-items:center;padding:5px 12px;border-radius:6px;font-size:12px;border:1px solid var(--border);text-decoration:none;color:var(--foreground);background:var(--background);">
+        ← Sebelumnya
+      </a>
+      <% } %>
+      <% for (let pg = Math.max(1, _page-2); pg <= Math.min(_totalPages, _page+2); pg++) { %>
+      <a href="<%= buildQ({ page: pg }) %>"
+         style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;font-size:13px;font-weight:500;text-decoration:none;border:1px solid;
+                <%= pg === _page ? 'background:var(--primary);color:var(--primary-foreground);border-color:var(--primary);' : 'background:var(--background);color:var(--foreground);border-color:var(--border);' %>">
+        <%= pg %>
+      </a>
+      <% } %>
+      <% if (_page < _totalPages) { %>
+      <a href="<%= buildQ({ page: _page + 1 }) %>"
+         style="display:inline-flex;align-items:center;padding:5px 12px;border-radius:6px;font-size:12px;border:1px solid var(--border);text-decoration:none;color:var(--foreground);background:var(--background);">
+        Berikutnya →
+      </a>
+      <% } %>
+    </div>
+  </div>
+  <% } %>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

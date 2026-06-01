@@ -1,13 +1,14 @@
 const bcrypt = require('bcryptjs');
 const db = require('../lib/db');
+const { roleRedirect } = require('../middlewares/roleRedirect');
 
 const index = (req, res) => {
-  if (req.session.userId) return res.redirect('/dashboard');
+  if (req.session.userId) return roleRedirect(req, res);
   res.redirect('/login');
 };
 
 const loginPage = (req, res) => {
-  if (req.session.userId) return res.redirect('/dashboard');
+  if (req.session.userId) return roleRedirect(req, res);
   res.render('auth/login', { title: 'Login — Maintenance Ruangan FTI', errors: null, old: {} });
 };
 
@@ -75,6 +76,7 @@ const login = async (req, res, next) => {
 const logout = (req, res, next) => {
   req.session.destroy((err) => {
     if (err) return next(err);
+    res.clearCookie('fw_session');
     res.redirect('/login');
   });
 };

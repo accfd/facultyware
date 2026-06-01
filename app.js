@@ -1,14 +1,18 @@
 require('dotenv').config();
-var express    = require('express');
-var path       = require('path');
-var cookieParser = require('cookie-parser');
-var logger     = require('morgan');
-var session    = require('express-session');
-var MySQLStore = require('express-mysql-session')(session);
+var express        = require('express');
+var path           = require('path');
+var cookieParser   = require('cookie-parser');
+var logger         = require('morgan');
+var session        = require('express-session');
+var MySQLStore     = require('express-mysql-session')(session);
+var methodOverride = require('method-override');
 
-var indexRouter     = require('./routes/index');
-var dashboardRouter = require('./routes/dashboard');
-var laporanRouter   = require('./routes/laporan');
+var indexRouter         = require('./routes/index');
+var dashboardRouter     = require('./routes/dashboard');
+var laporanRouter       = require('./routes/laporan');
+var pjLaporanRouter     = require('./routes/pj/laporan');
+var maintenanceRouter   = require('./routes/pj/maintenance');
+var pengelolaRouter     = require('./routes/pengelola');
 const { notFoundHandler, errorHandler } = require('./middlewares/error');
 
 var app = express();
@@ -21,6 +25,7 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(methodOverride('_method'));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Session store — tabel express_sessions (terpisah dari sessions Laravel)
@@ -49,9 +54,12 @@ app.use(session({
 }));
 
 // Routes
-app.use('/',          indexRouter);
-app.use('/dashboard', dashboardRouter);
-app.use('/laporan',   laporanRouter);
+app.use('/',            indexRouter);
+app.use('/dashboard',   dashboardRouter);
+app.use('/laporan',     laporanRouter);
+app.use('/pj/laporan',  pjLaporanRouter);
+app.use('/maintenance', maintenanceRouter);
+app.use('/penugasan',   pengelolaRouter);
 
 // 404 & error handler
 app.use(notFoundHandler);

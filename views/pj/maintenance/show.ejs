@@ -1,0 +1,315 @@
+<%- include('../../partials/header', {
+  title:       typeof title !== 'undefined' ? title : 'Detail Maintenance',
+  currentPath: '/maintenance',
+  userRole:    typeof userRole !== 'undefined' ? userRole : '',
+  userName:    typeof userName !== 'undefined' ? userName : '',
+  flash:       typeof flash !== 'undefined' ? flash : null
+}) %>
+
+<%
+  const _l          = typeof laporan !== 'undefined' ? laporan : {};
+  const _logs       = typeof logs !== 'undefined' ? logs : [];
+  const _si         = typeof STATUS_INFO !== 'undefined' ? STATUS_INFO : {};
+  const _hasProg    = typeof hasProgress !== 'undefined' ? hasProgress : false;
+  const si          = _si[_l.status] || { text: _l.status, bg:'#f3f4f6', color:'#374151', border:'#d1d5db' };
+
+  function fmtDateTime(d) {
+    if (!d) return '-';
+    return new Date(d).toLocaleString('id-ID', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  }
+
+  const logStatusLabel = { 1:'Permohonan Dibuat', 2:'Diterima', 3:'Progres Perbaikan', 4:'Revisi Diminta', 5:'Dinyatakan Selesai' };
+  const logStatusColor = {
+    1: { bg:'#eff6ff', color:'#1d4ed8' },
+    2: { bg:'#f0fdf4', color:'#15803d' },
+    3: { bg:'#faf5ff', color:'#7e22ce' },
+    4: { bg:'#fff7ed', color:'#c2410c' },
+    5: { bg:'#f0fdf4', color:'#15803d' },
+  };
+
+  // Cek apakah sudah resolved
+  const isResolved = _l.status === 'resolved';
+%>
+
+<!-- Breadcrumb -->
+<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted-foreground);margin-bottom:20px;">
+  <a href="/maintenance" style="color:var(--muted-foreground);text-decoration:none;">Permohonan Maintenance</a>
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+  <span style="color:var(--foreground);">Detail Permohonan</span>
+</div>
+
+<div style="max-width:820px;">
+
+  <!-- Header card -->
+  <div class="card" style="padding:24px;margin-bottom:20px;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px;">
+      <div>
+        <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:4px;">Nomor Permohonan</div>
+        <div style="font-size:20px;font-weight:700;">MNT-<%= String(_l.id).padStart(5,'0') %></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="display:inline-flex;align-items:center;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;
+                     background:<%= si.bg %>;color:<%= si.color %>;border:1px solid <%= si.border %>;">
+          <%= si.text %>
+        </span>
+      </div>
+    </div>
+
+    <!-- Info grid -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:20px;">
+      <div>
+        <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:3px;">Ruangan</div>
+        <div style="font-size:14px;font-weight:600;"><%= _l.room_name %> (<%= _l.room_code %>)</div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:3px;">Gedung</div>
+        <div style="font-size:14px;font-weight:600;"><%= _l.building_name %></div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:3px;">Pelapor</div>
+        <div style="font-size:14px;font-weight:600;"><%= _l.reported_by_name %></div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:3px;">Pengelola Ditugaskan</div>
+        <div style="font-size:14px;font-weight:600;"><%= _l.pengelola_name || '—' %></div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:3px;">Tanggal Laporan</div>
+        <div style="font-size:14px;font-weight:600;"><%= fmtDateTime(_l.reported_at) %></div>
+      </div>
+      <% if (_l.resolved_at) { %>
+      <div>
+        <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:3px;">Tanggal Selesai</div>
+        <div style="font-size:14px;font-weight:600;color:#15803d;"><%= fmtDateTime(_l.resolved_at) %></div>
+      </div>
+      <% } %>
+    </div>
+
+    <!-- Deskripsi -->
+    <div>
+      <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:6px;">Deskripsi Kerusakan</div>
+      <div style="font-size:14px;line-height:1.65;background:var(--muted);border-radius:8px;padding:14px 16px;white-space:pre-wrap;"><%= _l.issue_description %></div>
+    </div>
+  </div>
+
+  <!-- Tombol Aksi (Close & Revisi) — hanya jika belum resolved -->
+  <% if (!isResolved) { %>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+
+    <!-- Tombol Close -->
+    <% if (_hasProg) { %>
+    <form method="POST" action="/maintenance/<%= _l.id %>/close"
+          onsubmit="return confirm('Yakin ingin menutup permohonan ini dan menyatakannya SELESAI? Tindakan tidak dapat dibatalkan.')">
+      <button type="submit" class="btn"
+              style="display:inline-flex;align-items:center;gap:6px;font-size:13px;background:#15803d;border-color:#15803d;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Tutup & Nyatakan Selesai
+      </button>
+    </form>
+    <% } else { %>
+    <button type="button" disabled
+            style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:500;border:1px solid var(--border);color:var(--muted-foreground);background:var(--muted);cursor:not-allowed;"
+            title="Belum ada update progres dari pengelola">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      Tutup & Nyatakan Selesai
+    </button>
+    <span style="font-size:12px;color:var(--muted-foreground);align-self:center;">
+      ← Tunggu update progres dari pengelola
+    </span>
+    <% } %>
+
+    <!-- Tombol buka modal Revisi -->
+    <button type="button" id="btnRevisi"
+            onclick="document.getElementById('revisiModal').style.display='flex'"
+            style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:500;border:1px solid #fde68a;color:#a16207;background:#fffbeb;cursor:pointer;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Minta Revisi
+    </button>
+  </div>
+  <% } %>
+
+  <!-- Timeline log -->
+  <div class="card" style="padding:24px;">
+    <h2 style="font-size:15px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+      Riwayat Perbaikan
+      <span style="font-size:12px;font-weight:400;color:var(--muted-foreground);margin-left:4px;"><%= _logs.length %> entri</span>
+    </h2>
+
+    <% if (_logs.length === 0) { %>
+    <p style="font-size:13.5px;color:var(--muted-foreground);text-align:center;padding:24px 0;">
+      Belum ada riwayat perbaikan.
+    </p>
+    <% } else { %>
+    <div style="position:relative;padding-left:28px;">
+      <div style="position:absolute;left:8px;top:8px;bottom:8px;width:2px;background:var(--border);border-radius:1px;"></div>
+
+      <% _logs.forEach(function(lg, i) {
+        const lsc = logStatusColor[lg.status] || { bg:'#f3f4f6', color:'#374151' };
+        const lsl = logStatusLabel[lg.status] || ('Status ' + lg.status);
+      %>
+      <div style="position:relative;margin-bottom:<%= i < _logs.length - 1 ? '24px' : '0' %>;">
+        <!-- Titik timeline -->
+        <div style="position:absolute;left:-24px;top:4px;width:14px;height:14px;border-radius:50%;
+                    background:<%= lsc.color %>;border:2px solid var(--background);box-shadow:0 0 0 2px <%= lsc.color %>30;"></div>
+
+        <div style="background:var(--muted);border-radius:10px;padding:14px 16px;
+                    <%= lg.status === 4 ? 'border-left:3px solid #d97706;' : '' %>">
+          <!-- Header baris log -->
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+            <span style="display:inline-flex;align-items:center;padding:2px 10px;border-radius:20px;font-size:11.5px;font-weight:600;
+                         background:<%= lsc.bg %>;color:<%= lsc.color %>;">
+              <%= lsl %>
+            </span>
+            <span style="font-size:12px;color:var(--muted-foreground);"><%= fmtDateTime(lg.logged_at || lg.created_at) %></span>
+            <% if (lg.logged_by_name) { %>
+            <span style="font-size:12px;color:var(--muted-foreground);">
+              oleh <strong style="color:var(--foreground);"><%= lg.logged_by_name %></strong>
+            </span>
+            <% } %>
+          </div>
+
+          <% if (lg.log) { %>
+          <p style="font-size:13.5px;font-weight:500;margin-bottom:6px;"><%= lg.log %></p>
+          <% } %>
+
+          <% if (lg.description) { %>
+          <% if (lg.status === 4) { %>
+          <!-- Catatan revisi → highlight khusus -->
+          <div style="background:#fff7ed;border-radius:6px;padding:10px 12px;border:1px solid #fed7aa;">
+            <div style="font-size:11px;font-weight:700;color:#c2410c;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Catatan Revisi</div>
+            <p style="font-size:13.5px;color:#92400e;line-height:1.6;margin:0;"><%= lg.description %></p>
+          </div>
+          <% } else { %>
+          <p style="font-size:13.5px;color:var(--muted-foreground);line-height:1.6;margin-bottom:6px;"><%= lg.description %></p>
+          <% } %>
+          <% } %>
+
+          <% if (lg.log_file) { %>
+          <div style="margin-top:8px;">
+            <a href="<%= lg.log_file %>" target="_blank"
+               style="display:inline-block;border-radius:8px;overflow:hidden;border:1px solid var(--border);">
+              <img src="<%= lg.log_file %>" alt="Foto progres"
+                   style="max-width:280px;max-height:180px;object-fit:cover;display:block;"
+                   onerror="this.parentElement.style.display='none'"/>
+            </a>
+          </div>
+          <% } %>
+        </div>
+      </div>
+      <% }); %>
+    </div>
+    <% } %>
+  </div>
+
+  <!-- Back -->
+  <div style="margin-top:16px;">
+    <a href="/maintenance" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted-foreground);text-decoration:none;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      Kembali ke Daftar Permohonan
+    </a>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MODAL REVISI
+═══════════════════════════════════════════════════════════ -->
+<div id="revisiModal"
+     style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.45);
+            align-items:center;justify-content:center;padding:16px;">
+  <div style="background:var(--background);border-radius:14px;padding:28px;width:100%;max-width:480px;
+              box-shadow:0 20px 60px rgba(0,0,0,.2);position:relative;animation:fadeUp .2s ease;">
+
+    <!-- Tutup modal -->
+    <button type="button" onclick="document.getElementById('revisiModal').style.display='none'"
+            style="position:absolute;top:16px;right:16px;background:none;border:none;cursor:pointer;
+                   color:var(--muted-foreground);font-size:20px;line-height:1;padding:4px;">×</button>
+
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <div style="width:32px;height:32px;border-radius:8px;background:#fff7ed;display:flex;align-items:center;justify-content:center;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </div>
+        <h3 style="font-size:16px;font-weight:700;">Minta Revisi Perbaikan</h3>
+      </div>
+      <p style="font-size:13px;color:var(--muted-foreground);line-height:1.5;">
+        Tuliskan catatan revisi yang perlu diperbaiki oleh pengelola aset.
+        Catatan ini akan terlihat di timeline riwayat perbaikan.
+      </p>
+    </div>
+
+    <form method="POST" action="/maintenance/<%= _l.id %>/revisi" id="revisiForm">
+      <div style="margin-bottom:20px;">
+        <label for="catatan" style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">
+          Catatan Revisi <span style="color:#dc2626;">*</span>
+          <span style="font-weight:400;color:var(--muted-foreground);">(min. 10 karakter)</span>
+        </label>
+        <textarea id="catatan" name="catatan" rows="4"
+                  placeholder="Contoh: Perbaikan belum sempurna, mohon periksa kembali bagian kanan..."
+                  style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);
+                         background:var(--background);color:var(--foreground);font-size:14px;
+                         resize:vertical;outline:none;font-family:inherit;box-sizing:border-box;"></textarea>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;">
+          <span id="revisiErr" style="font-size:12px;color:#dc2626;display:none;">
+            Catatan minimal 10 karakter.
+          </span>
+          <span id="revisiCount" style="font-size:12px;color:var(--muted-foreground);margin-left:auto;">0 karakter</span>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button type="button"
+                onclick="document.getElementById('revisiModal').style.display='none'"
+                style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:6px;font-size:14px;font-weight:500;border:1px solid var(--border);color:var(--foreground);background:var(--background);cursor:pointer;">
+          Batal
+        </button>
+        <button type="submit" id="revisiSubmit"
+                style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:6px;font-size:14px;font-weight:500;
+                       background:#d97706;border:1px solid #d97706;color:white;cursor:pointer;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Kirim Catatan Revisi
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(12px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+</style>
+
+<script>
+  // Tutup modal dengan klik backdrop
+  document.getElementById('revisiModal').addEventListener('click', function(e) {
+    if (e.target === this) this.style.display = 'none';
+  });
+
+  // Counter + validasi catatan revisi
+  const catatanEl  = document.getElementById('catatan');
+  const revisiCount = document.getElementById('revisiCount');
+  const revisiErr   = document.getElementById('revisiErr');
+  const revisiForm  = document.getElementById('revisiForm');
+
+  if (catatanEl) {
+    catatanEl.addEventListener('input', function() {
+      const len = this.value.length;
+      revisiCount.textContent = len + ' karakter';
+      revisiCount.style.color = len < 10 ? '#dc2626' : 'var(--muted-foreground)';
+    });
+
+    revisiForm.addEventListener('submit', function(e) {
+      if (catatanEl.value.trim().length < 10) {
+        e.preventDefault();
+        revisiErr.style.display = 'inline';
+        catatanEl.style.borderColor = '#fca5a5';
+        return;
+      }
+      revisiErr.style.display = 'none';
+    });
+  }
+</script>
+
+<%- include('../../partials/footer') %>

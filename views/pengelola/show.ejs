@@ -1,0 +1,403 @@
+<%- include('../partials/header', {
+  title:       typeof title !== 'undefined' ? title : 'Detail Penugasan',
+  currentPath: '/penugasan',
+  userRole:    typeof userRole !== 'undefined' ? userRole : '',
+  userName:    typeof userName !== 'undefined' ? userName : '',
+  flash:       typeof flash !== 'undefined' ? flash : null
+}) %>
+
+<%
+  const _l         = typeof laporan !== 'undefined' ? laporan : {};
+  const _logs      = typeof logs !== 'undefined' ? logs : [];
+  const _si        = typeof STATUS_INFO !== 'undefined' ? STATUS_INFO : {};
+  const _hasRevisi = typeof hasRevisi !== 'undefined' ? hasRevisi : false;
+  const _revNote   = typeof lastRevisiNote !== 'undefined' ? lastRevisiNote : null;
+  const si         = _si[_l.status] || { text: _l.status, bg:'#f3f4f6', color:'#374151', border:'#d1d5db' };
+
+  function fmtDateTime(d) {
+    if (!d) return '-';
+    return new Date(d).toLocaleString('id-ID', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  }
+
+  const logStatusLabel = { 1:'Permohonan Dibuat', 2:'Diterima', 3:'Progres Perbaikan', 4:'Revisi Diminta', 5:'Dinyatakan Selesai' };
+  const logStatusColor = {
+    1: { bg:'#eff6ff', color:'#1d4ed8' },
+    2: { bg:'#f0fdf4', color:'#15803d' },
+    3: { bg:'#faf5ff', color:'#7e22ce' },
+    4: { bg:'#fff7ed', color:'#c2410c' },
+    5: { bg:'#f0fdf4', color:'#15803d' },
+  };
+
+  const isResolved = _l.status === 'resolved';
+%>
+
+<!-- Breadcrumb -->
+<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted-foreground);margin-bottom:20px;">
+  <a href="/penugasan" style="color:var(--muted-foreground);text-decoration:none;">Penugasan Aktif</a>
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+  <span style="color:var(--foreground);">Detail Penugasan</span>
+</div>
+
+<div style="max-width:820px;">
+
+  <!-- Alert Revisi — tampil jika log terakhir adalah revisi -->
+  <% if (_hasRevisi && _revNote) { %>
+  <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:16px 18px;margin-bottom:20px;display:flex;align-items:flex-start;gap:12px;">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" style="flex-shrink:0;margin-top:1px;">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <div>
+      <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:4px;">⚠ Ada Permintaan Revisi dari Penanggung Jawab</div>
+      <p style="font-size:13px;color:#92400e;line-height:1.55;margin:0;"><%= _revNote %></p>
+      <p style="font-size:12px;color:#b45309;margin-top:6px;margin-bottom:0;">Silakan perbaiki dan kirim update progres baru di bawah.</p>
+    </div>
+  </div>
+  <% } %>
+
+  <!-- Info laporan -->
+  <div class="card" style="padding:24px;margin-bottom:20px;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px;">
+      <div>
+        <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:4px;">Nomor Penugasan</div>
+        <div style="font-size:20px;font-weight:700;">PNT-<%= String(_l.id).padStart(5,'0') %></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="display:inline-flex;align-items:center;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;
+                     background:<%= si.bg %>;color:<%= si.color %>;border:1px solid <%= si.border %>;">
+          <%= si.text %>
+        </span>
+        <a href="/penugasan/<%= _l.id %>/pdf"
+           style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:6px;font-size:12.5px;font-weight:500;border:1px solid var(--border);color:var(--foreground);text-decoration:none;background:var(--background);">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          PDF Permohonan
+        </a>
+        <a href="/penugasan/<%= _l.id %>/pdf-hasil"
+           style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:6px;font-size:12.5px;font-weight:500;border:1px solid #bbf7d0;color:#15803d;text-decoration:none;background:#f0fdf4;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          PDF Hasil
+        </a>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:20px;">
+      <div>
+        <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:3px;">Ruangan</div>
+        <div style="font-size:14px;font-weight:600;"><%= _l.room_name %> (<%= _l.room_code %>)</div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:3px;">Gedung</div>
+        <div style="font-size:14px;font-weight:600;"><%= _l.building_name %></div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:3px;">Pelapor</div>
+        <div style="font-size:14px;font-weight:600;"><%= _l.reported_by_name %></div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:3px;">Penanggung Jawab</div>
+        <div style="font-size:14px;font-weight:600;"><%= _l.penanggung_jawab_name %></div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:3px;">Tanggal Laporan</div>
+        <div style="font-size:14px;font-weight:600;"><%= fmtDateTime(_l.reported_at) %></div>
+      </div>
+    </div>
+
+    <div>
+      <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:6px;">Deskripsi Kerusakan</div>
+      <div style="font-size:14px;line-height:1.65;background:var(--muted);border-radius:8px;padding:14px 16px;white-space:pre-wrap;"><%= _l.issue_description %></div>
+    </div>
+  </div>
+
+  <!-- Timeline log -->
+  <div class="card" style="padding:24px;margin-bottom:20px;">
+    <h2 style="font-size:15px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+      Riwayat Perbaikan
+      <span style="font-size:12px;font-weight:400;color:var(--muted-foreground);margin-left:4px;"><%= _logs.length %> entri</span>
+    </h2>
+
+    <% if (_logs.length === 0) { %>
+    <p style="font-size:13.5px;color:var(--muted-foreground);text-align:center;padding:20px 0;">Belum ada riwayat perbaikan.</p>
+    <% } else { %>
+    <div style="position:relative;padding-left:28px;">
+      <div style="position:absolute;left:8px;top:8px;bottom:8px;width:2px;background:var(--border);border-radius:1px;"></div>
+
+      <% _logs.forEach(function(lg, i) {
+        const lsc = logStatusColor[lg.status] || { bg:'#f3f4f6', color:'#374151' };
+        const lsl = logStatusLabel[lg.status] || ('Status ' + lg.status);
+      %>
+      <div style="position:relative;margin-bottom:<%= i < _logs.length - 1 ? '24px' : '0' %>;">
+        <div style="position:absolute;left:-24px;top:4px;width:14px;height:14px;border-radius:50%;
+                    background:<%= lsc.color %>;border:2px solid var(--background);box-shadow:0 0 0 2px <%= lsc.color %>30;"></div>
+
+        <div style="background:var(--muted);border-radius:10px;padding:14px 16px;
+                    <%= lg.status === 4 ? 'border-left:3px solid #d97706;' : '' %>
+                    <%= lg.status === 3 ? 'border-left:3px solid #7e22ce;' : '' %>">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+            <span style="display:inline-flex;align-items:center;padding:2px 10px;border-radius:20px;font-size:11.5px;font-weight:600;
+                         background:<%= lsc.bg %>;color:<%= lsc.color %>;">
+              <%= lsl %>
+            </span>
+            <span style="font-size:12px;color:var(--muted-foreground);"><%= fmtDateTime(lg.logged_at || lg.created_at) %></span>
+            <% if (lg.logged_by_name) { %>
+            <span style="font-size:12px;color:var(--muted-foreground);">oleh <strong style="color:var(--foreground);"><%= lg.logged_by_name %></strong></span>
+            <% } %>
+          </div>
+
+          <% if (lg.log) { %>
+          <p style="font-size:13.5px;font-weight:600;margin-bottom:6px;"><%= lg.log %></p>
+          <% } %>
+
+          <% if (lg.description) { %>
+          <% if (lg.status === 4) { %>
+          <div style="background:#fff7ed;border-radius:6px;padding:10px 12px;border:1px solid #fed7aa;margin-bottom:8px;">
+            <div style="font-size:11px;font-weight:700;color:#c2410c;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Catatan Revisi</div>
+            <p style="font-size:13.5px;color:#92400e;line-height:1.6;margin:0;"><%= lg.description %></p>
+          </div>
+          <% } else { %>
+          <p style="font-size:13.5px;color:var(--muted-foreground);line-height:1.6;margin-bottom:8px;"><%= lg.description %></p>
+          <% } %>
+          <% } %>
+
+          <!-- Foto dengan lightbox -->
+          <% if (lg.log_file) { %>
+          <div style="margin-top:8px;">
+            <img src="<%= lg.log_file %>" alt="Foto perbaikan"
+                 onclick="openLightbox('<%= lg.log_file %>')"
+                 style="max-width:200px;max-height:140px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:zoom-in;display:block;transition:opacity .15s;"
+                 onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'"
+                 onerror="this.parentElement.style.display='none'"/>
+            <a href="<%= lg.log_file %>" target="_blank"
+               style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--muted-foreground);text-decoration:none;margin-top:4px;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              Buka di tab baru
+            </a>
+          </div>
+          <% } %>
+        </div>
+      </div>
+      <% }); %>
+    </div>
+    <% } %>
+  </div>
+
+  <!-- Form Upload Progres — hanya jika belum resolved -->
+  <% if (!isResolved) { %>
+  <div class="card" style="padding:24px;" id="formProgres">
+    <h2 style="font-size:15px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Kirim Update Progres
+    </h2>
+    <p style="font-size:13px;color:var(--muted-foreground);margin-bottom:20px;">
+      Upload foto bukti perbaikan beserta deskripsi pekerjaan yang sudah dilakukan.
+    </p>
+
+    <form method="POST" action="/penugasan/<%= _l.id %>/progres"
+          enctype="multipart/form-data" id="progresForm">
+
+      <!-- Foto (wajib) -->
+      <div style="margin-bottom:20px;">
+        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">
+          Foto Bukti Perbaikan <span style="color:#dc2626;">*</span>
+        </label>
+
+        <!-- Preview -->
+        <div id="previewWrap" style="display:none;margin-bottom:10px;position:relative;display:inline-block;">
+          <img id="previewImg" src="" alt="Preview"
+               style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--border);object-fit:cover;display:block;"/>
+          <button type="button" id="removePhoto"
+                  style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.55);border:none;cursor:pointer;
+                         border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;
+                         color:white;font-size:14px;line-height:1;">×</button>
+        </div>
+
+        <label for="foto" id="fotoLabel"
+               style="display:flex;align-items:center;justify-content:center;gap:8px;
+                      padding:18px;border-radius:8px;border:2px dashed var(--border);
+                      background:var(--muted);cursor:pointer;font-size:13.5px;color:var(--muted-foreground);
+                      transition:border-color .15s;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+          <span id="fotoLblTxt">Klik untuk pilih foto (JPG/PNG, maks 5MB)</span>
+        </label>
+        <input type="file" id="foto" name="foto" accept="image/jpeg,image/png" style="display:none;"/>
+        <p id="errFoto" style="font-size:12px;color:#dc2626;margin-top:4px;display:none;"></p>
+      </div>
+
+      <!-- Deskripsi (wajib) -->
+      <div style="margin-bottom:24px;">
+        <label for="description" style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">
+          Deskripsi Pekerjaan <span style="color:#dc2626;">*</span>
+          <span style="font-weight:400;color:var(--muted-foreground);">(min. 20 karakter)</span>
+        </label>
+        <textarea id="description" name="description" rows="4"
+                  placeholder="Jelaskan pekerjaan perbaikan yang sudah dilakukan secara detail..."
+                  style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);
+                         background:var(--background);color:var(--foreground);font-size:14px;
+                         resize:vertical;outline:none;font-family:inherit;box-sizing:border-box;"></textarea>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;">
+          <p id="errDesc" style="font-size:12px;color:#dc2626;display:none;">Deskripsi minimal 20 karakter.</p>
+          <span id="descCount" style="font-size:12px;color:var(--muted-foreground);margin-left:auto;">0 / 500</span>
+        </div>
+      </div>
+
+      <!-- Tombol submit -->
+      <div style="display:flex;justify-content:flex-end;gap:10px;">
+        <a href="/penugasan"
+           style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:6px;font-size:14px;font-weight:500;border:1px solid var(--border);text-decoration:none;color:var(--foreground);background:var(--background);">
+          Kembali
+        </a>
+        <button type="submit" id="submitBtn" class="btn"
+                style="display:inline-flex;align-items:center;gap:6px;padding:8px 20px;font-size:14px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+          Kirim Update Progres
+        </button>
+      </div>
+    </form>
+  </div>
+  <% } else { %>
+  <!-- Penugasan sudah selesai -->
+  <div style="text-align:center;padding:20px;color:var(--muted-foreground);">
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2"
+         style="margin:0 auto 8px;display:block;">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+      <polyline points="22 4 12 14.01 9 11.01"/>
+    </svg>
+    <p style="font-size:14px;font-weight:600;color:#15803d;">Penugasan ini telah dinyatakan selesai.</p>
+    <a href="/penugasan" style="font-size:13px;color:var(--muted-foreground);text-decoration:none;">← Kembali ke daftar</a>
+  </div>
+  <% } %>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     LIGHTBOX
+═══════════════════════════════════════════════════════════ -->
+<div id="lightbox"
+     onclick="closeLightbox()"
+     style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.85);
+            align-items:center;justify-content:center;cursor:zoom-out;">
+  <img id="lightboxImg" src="" alt="Foto perbaikan"
+       style="max-width:90vw;max-height:88vh;object-fit:contain;border-radius:8px;
+              box-shadow:0 8px 40px rgba(0,0,0,.5);"/>
+  <button onclick="closeLightbox()" style="position:fixed;top:16px;right:20px;background:none;border:none;
+          color:white;font-size:28px;cursor:pointer;line-height:1;opacity:.8;">×</button>
+</div>
+
+<script>
+// ── Lightbox ──────────────────────────────────────────────────────────────────
+function openLightbox(src) {
+  const lb = document.getElementById('lightbox');
+  document.getElementById('lightboxImg').src = src;
+  lb.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  document.getElementById('lightbox').style.display = 'none';
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeLightbox();
+});
+
+// ── Preview foto ──────────────────────────────────────────────────────────────
+const fotoInput   = document.getElementById('foto');
+const previewWrap = document.getElementById('previewWrap');
+const previewImg  = document.getElementById('previewImg');
+const removeBtn   = document.getElementById('removePhoto');
+const fotoLabel   = document.getElementById('fotoLabel');
+const fotoLblTxt  = document.getElementById('fotoLblTxt');
+const errFoto     = document.getElementById('errFoto');
+
+if (fotoInput) {
+  fotoInput.addEventListener('change', function() {
+    const file = this.files[0];
+    if (!file) return;
+    if (!['image/jpeg','image/jpg','image/png'].includes(file.type)) {
+      errFoto.textContent = 'Hanya file JPG/PNG yang diperbolehkan.';
+      errFoto.style.display = 'block';
+      this.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      errFoto.textContent = 'Ukuran file maksimal 5MB.';
+      errFoto.style.display = 'block';
+      this.value = '';
+      return;
+    }
+    errFoto.style.display = 'none';
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      previewImg.src = e.target.result;
+      previewWrap.style.display = 'inline-block';
+      fotoLabel.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+    fotoLblTxt.textContent = file.name;
+  });
+
+  removeBtn && removeBtn.addEventListener('click', function() {
+    fotoInput.value = '';
+    previewWrap.style.display = 'none';
+    fotoLabel.style.display = 'flex';
+    fotoLblTxt.textContent = 'Klik untuk pilih foto (JPG/PNG, maks 5MB)';
+    previewImg.src = '';
+  });
+}
+
+// ── Counter + validasi ────────────────────────────────────────────────────────
+const descEl   = document.getElementById('description');
+const descCount = document.getElementById('descCount');
+const errDesc  = document.getElementById('errDesc');
+const submitBtn = document.getElementById('submitBtn');
+const form      = document.getElementById('progresForm');
+
+if (descEl) {
+  descEl.addEventListener('input', function() {
+    const len = this.value.length;
+    descCount.textContent = len + ' / 500';
+    descCount.style.color = len < 20 ? '#dc2626' : 'var(--muted-foreground)';
+  });
+}
+
+if (form) {
+  form.addEventListener('submit', function(e) {
+    let valid = true;
+
+    if (!fotoInput || !fotoInput.files || fotoInput.files.length === 0) {
+      errFoto.textContent = 'Foto bukti perbaikan wajib diunggah.';
+      errFoto.style.display = 'block';
+      valid = false;
+    }
+
+    const descVal = descEl ? descEl.value.trim() : '';
+    if (descVal.length < 20) {
+      errDesc.style.display = 'block';
+      if (descEl) descEl.style.borderColor = '#fca5a5';
+      valid = false;
+    } else {
+      errDesc.style.display = 'none';
+      if (descEl) descEl.style.borderColor = 'var(--border)';
+    }
+
+    if (!valid) {
+      e.preventDefault();
+      return;
+    }
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg> Mengirim…';
+    }
+  });
+}
+</script>
+
+<%- include('../partials/footer') %>

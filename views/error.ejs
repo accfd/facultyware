@@ -50,9 +50,20 @@
     </div>
     <div class="error-message"><%= message || 'Terjadi kesalahan yang tidak terduga.' %></div>
     <div class="btn-wrap">
-      <button class="btn btn-secondary" onclick="history.back()">← Kembali</button>
+      <a href="javascript:void(0)" id="btnBack" class="btn btn-secondary">← Kembali</a>
       <a href="/login" class="btn btn-primary">Ke Halaman Login</a>
     </div>
   </div>
+  <script>
+    // Kembali ke halaman sebelumnya jika ada, atau ke /login
+    var btnBack = document.getElementById('btnBack');
+    btnBack.addEventListener('click', function() {
+      if (document.referrer && document.referrer !== window.location.href) {
+        history.back();
+      } else {
+        window.location.href = '/login';
+      }
+    });
+  </script>
 </body>
 </html>

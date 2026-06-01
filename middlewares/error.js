@@ -7,13 +7,19 @@ const notFoundHandler = (req, res, next) => {
 
 // error handler
 const errorHandler = (err, req, res, next) => {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+  const status  = err.status || err.statusCode || 500;
+  const message = err.message || 'Terjadi kesalahan yang tidak terduga.';
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+  // Untuk request API/AJAX, kembalikan JSON
+  if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+    return res.status(status).json({ error: message });
+  }
+
+  res.status(status);
+  res.render('error', {
+    message,
+    error: { status, stack: req.app.get('env') === 'development' ? err.stack : '' },
+  });
 };
 
 module.exports = {
