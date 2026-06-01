@@ -1,0 +1,145 @@
+<%- include('../partials/header', {
+  title:       'Laporan Saya',
+  currentPath: '/laporan',
+  userRole:    typeof userRole !== 'undefined' ? userRole : '',
+  userName:    typeof userName !== 'undefined' ? userName : '',
+  flash:       typeof flash !== 'undefined' ? flash : null
+}) %>
+
+<%
+  const _si = typeof STATUS_INFO !== 'undefined' ? STATUS_INFO : {};
+  const _laporan = typeof laporan !== 'undefined' ? laporan : [];
+  const _total = typeof total !== 'undefined' ? total : 0;
+  const _page  = typeof page  !== 'undefined' ? page  : 1;
+  const _totalPages = typeof totalPages !== 'undefined' ? totalPages : 1;
+  const _status = typeof status !== 'undefined' ? status : '';
+
+  const statusFilters = [
+    { val: '',            label: 'Semua' },
+    { val: 'reported',    label: 'Dilaporkan' },
+    { val: 'in_progress', label: 'Diproses' },
+    { val: 'resolved',    label: 'Selesai' },
+  ];
+
+  function fmtDate(d) {
+    if (!d) return '-';
+    return new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+  function trunc(s, n) {
+    if (!s) return '-';
+    return s.length > n ? s.substring(0, n) + '…' : s;
+  }
+%>
+
+<!-- Page heading -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+  <div>
+    <h1 style="font-size:20px;font-weight:700;margin-bottom:4px;">Laporan Saya</h1>
+    <p style="font-size:13px;color:var(--muted-foreground);">Riwayat laporan kerusakan yang pernah Anda buat</p>
+  </div>
+  <a href="/laporan/buat" class="btn" style="display:inline-flex;align-items:center;gap:6px;">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Buat Laporan Baru
+  </a>
+</div>
+
+<!-- Filter status -->
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+  <% statusFilters.forEach(function(sf) { %>
+  <a href="/laporan?status=<%= sf.val %>"
+     style="display:inline-flex;align-items:center;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;border:1px solid;text-decoration:none;transition:all .15s;
+            <% if (_status === sf.val) { %>background:var(--primary);color:var(--primary-foreground);border-color:var(--primary);<% } else { %>background:var(--background);color:var(--foreground);border-color:var(--border);<% } %>">
+    <%= sf.label %>
+  </a>
+  <% }); %>
+</div>
+
+<!-- Tabel -->
+<div class="card" style="overflow:hidden;padding:0;">
+  <% if (_laporan.length === 0) { %>
+  <div style="padding:48px;text-align:center;color:var(--muted-foreground);">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 12px;display:block;opacity:.4;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    <p style="font-size:14px;">Belum ada laporan<% if (_status) { %> dengan status ini<% } %>.</p>
+    <a href="/laporan/buat" class="btn" style="margin-top:14px;display:inline-flex;align-items:center;gap:6px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Buat Laporan Pertama
+    </a>
+  </div>
+  <% } else { %>
+  <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:13.5px;">
+      <thead>
+        <tr style="border-bottom:1px solid var(--border);background:var(--muted);">
+          <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);white-space:nowrap;">No</th>
+          <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);">Ruangan</th>
+          <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);">Gedung</th>
+          <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);">Deskripsi</th>
+          <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);">Status</th>
+          <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);white-space:nowrap;">Tgl Laporan</th>
+          <th style="padding:10px 14px;text-align:center;font-weight:600;color:var(--muted-foreground);">Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% _laporan.forEach(function(l, i) {
+          const si = _si[l.status] || { text: l.status, bg: '#f3f4f6', color: '#374151', border: '#d1d5db' };
+          const no = (_page - 1) * 10 + i + 1;
+        %>
+        <tr style="border-bottom:1px solid var(--border);transition:background .1s;" onmouseover="this.style.background='var(--muted)'" onmouseout="this.style.background=''">
+          <td style="padding:12px 14px;color:var(--muted-foreground);"><%= no %></td>
+          <td style="padding:12px 14px;font-weight:500;"><%= l.room_name %></td>
+          <td style="padding:12px 14px;color:var(--muted-foreground);"><%= l.building_name %></td>
+          <td style="padding:12px 14px;max-width:260px;">
+            <span title="<%= l.issue_description %>"><%= trunc(l.issue_description, 60) %></span>
+          </td>
+          <td style="padding:12px 14px;">
+            <span style="display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;
+                         background:<%= si.bg %>;color:<%= si.color %>;border:1px solid <%= si.border %>;">
+              <%= si.text %>
+            </span>
+          </td>
+          <td style="padding:12px 14px;white-space:nowrap;color:var(--muted-foreground);"><%= fmtDate(l.reported_at) %></td>
+          <td style="padding:12px 14px;text-align:center;">
+            <div style="display:inline-flex;gap:6px;">
+              <a href="/laporan/<%= l.id %>" class="btn-outline btn-sm" style="font-size:12px;padding:4px 10px;display:inline-flex;align-items:center;gap:4px;text-decoration:none;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                Detail
+              </a>
+              <a href="/laporan/<%= l.id %>/pdf" class="btn-outline btn-sm" style="font-size:12px;padding:4px 10px;display:inline-flex;align-items:center;gap:4px;text-decoration:none;color:var(--muted-foreground);">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                PDF
+              </a>
+            </div>
+          </td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <% if (_totalPages > 1) { %>
+  <div style="padding:14px 16px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+    <span style="font-size:13px;color:var(--muted-foreground);">
+      Menampilkan <%= (_page - 1) * 10 + 1 %>–<%= Math.min(_page * 10, _total) %> dari <%= _total %> laporan
+    </span>
+    <div style="display:flex;gap:6px;">
+      <% if (_page > 1) { %>
+      <a href="/laporan?status=<%= _status %>&page=<%= _page - 1 %>" class="btn-outline btn-sm" style="font-size:12px;text-decoration:none;">← Sebelumnya</a>
+      <% } %>
+      <% for (let p = 1; p <= _totalPages; p++) { %>
+      <a href="/laporan?status=<%= _status %>&page=<%= p %>"
+         style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;font-size:13px;font-weight:500;text-decoration:none;border:1px solid;
+                <% if (p === _page) { %>background:var(--primary);color:var(--primary-foreground);border-color:var(--primary);<% } else { %>background:var(--background);color:var(--foreground);border-color:var(--border);<% } %>">
+        <%= p %>
+      </a>
+      <% } %>
+      <% if (_page < _totalPages) { %>
+      <a href="/laporan?status=<%= _status %>&page=<%= _page + 1 %>" class="btn-outline btn-sm" style="font-size:12px;text-decoration:none;">Berikutnya →</a>
+      <% } %>
+    </div>
+  </div>
+  <% } %>
+  <% } %>
+</div>
+
+<%- include('../partials/footer') %>

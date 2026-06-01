@@ -1,0 +1,170 @@
+<%- include('../partials/header', {
+  title:       typeof title !== 'undefined' ? title : 'Detail Laporan',
+  currentPath: '/laporan',
+  userRole:    typeof userRole !== 'undefined' ? userRole : '',
+  userName:    typeof userName !== 'undefined' ? userName : '',
+  flash:       typeof flash !== 'undefined' ? flash : null
+}) %>
+
+<%
+  const _l    = typeof laporan !== 'undefined' ? laporan : {};
+  const _logs = typeof logs    !== 'undefined' ? logs    : [];
+  const _si   = typeof STATUS_INFO !== 'undefined' ? STATUS_INFO : {};
+  const si    = _si[_l.status] || { text: _l.status, bg: '#f3f4f6', color: '#374151', border: '#d1d5db' };
+
+  function fmtDateTime(d) {
+    if (!d) return '-';
+    return new Date(d).toLocaleString('id-ID', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  }
+
+  const logStatusLabel = { 1:'Laporan Dibuat', 2:'Diterima', 3:'Progres Perbaikan', 4:'Revisi', 5:'Selesai' };
+  const logStatusColor = {
+    1: { bg:'#eff6ff', color:'#1d4ed8' },
+    2: { bg:'#f0fdf4', color:'#15803d' },
+    3: { bg:'#faf5ff', color:'#7e22ce' },
+    4: { bg:'#fff7ed', color:'#c2410c' },
+    5: { bg:'#f0fdf4', color:'#15803d' },
+  };
+%>
+
+<!-- Breadcrumb -->
+<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted-foreground);margin-bottom:20px;">
+  <a href="/laporan" style="color:var(--muted-foreground);text-decoration:none;">Laporan Saya</a>
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+  <span style="color:var(--foreground);">Detail Laporan</span>
+</div>
+
+<div style="max-width:760px;">
+
+  <!-- Header card -->
+  <div class="card" style="padding:24px;margin-bottom:20px;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px;">
+      <div>
+        <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:4px;">Nomor Laporan</div>
+        <div style="font-size:20px;font-weight:700;">LPR-<%= String(_l.id).padStart(5, '0') %></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span style="display:inline-flex;align-items:center;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;
+                     background:<%= si.bg %>;color:<%= si.color %>;border:1px solid <%= si.border %>;">
+          <%= si.text %>
+        </span>
+        <a href="/laporan/<%= _l.id %>/pdf" class="btn-outline btn-sm"
+           style="font-size:13px;padding:6px 12px;display:inline-flex;align-items:center;gap:6px;text-decoration:none;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download PDF
+        </a>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px;">
+      <div>
+        <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:3px;">Ruangan</div>
+        <div style="font-size:14px;font-weight:600;"><%= _l.room_name %> (<%= _l.room_code %>)</div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:3px;">Gedung</div>
+        <div style="font-size:14px;font-weight:600;"><%= _l.building_name %></div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:3px;">Dilaporkan Oleh</div>
+        <div style="font-size:14px;font-weight:600;"><%= _l.reported_by_name %></div>
+      </div>
+      <div>
+        <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:3px;">Tanggal Laporan</div>
+        <div style="font-size:14px;font-weight:600;"><%= fmtDateTime(_l.reported_at) %></div>
+      </div>
+      <% if (_l.resolved_at) { %>
+      <div>
+        <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:3px;">Tanggal Selesai</div>
+        <div style="font-size:14px;font-weight:600;color:#15803d;"><%= fmtDateTime(_l.resolved_at) %></div>
+      </div>
+      <% } %>
+    </div>
+
+    <div>
+      <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:6px;">Deskripsi Kerusakan</div>
+      <div style="font-size:14px;line-height:1.65;background:var(--muted);border-radius:8px;padding:14px 16px;white-space:pre-wrap;"><%= _l.issue_description %></div>
+    </div>
+  </div>
+
+  <!-- Timeline log -->
+  <div class="card" style="padding:24px;">
+    <h2 style="font-size:15px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+      Riwayat Perbaikan
+    </h2>
+
+    <% if (_logs.length === 0) { %>
+    <p style="font-size:13.5px;color:var(--muted-foreground);text-align:center;padding:24px 0;">Belum ada riwayat perbaikan.</p>
+    <% } else { %>
+    <div style="position:relative;padding-left:28px;">
+      <!-- Garis vertikal -->
+      <div style="position:absolute;left:8px;top:8px;bottom:8px;width:2px;background:var(--border);border-radius:1px;"></div>
+
+      <% _logs.forEach(function(lg, i) {
+        const lsc = logStatusColor[lg.status] || { bg:'#f3f4f6', color:'#374151' };
+        const lsl = logStatusLabel[lg.status] || ('Status ' + lg.status);
+      %>
+      <div style="position:relative;margin-bottom:<%= i < _logs.length - 1 ? '24px' : '0' %>;">
+        <!-- Titik pada timeline -->
+        <div style="position:absolute;left:-24px;top:4px;width:14px;height:14px;border-radius:50%;background:<%= lsc.color %>;border:2px solid var(--background);box-shadow:0 0 0 2px <%= lsc.color %>30;"></div>
+
+        <div style="background:var(--muted);border-radius:10px;padding:14px 16px;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+            <span style="display:inline-flex;align-items:center;padding:2px 10px;border-radius:20px;font-size:11.5px;font-weight:600;background:<%= lsc.bg %>;color:<%= lsc.color %>;">
+              <%= lsl %>
+            </span>
+            <span style="font-size:12px;color:var(--muted-foreground);"><%= fmtDateTime(lg.logged_at || lg.created_at) %></span>
+            <% if (lg.logged_by_name) { %>
+            <span style="font-size:12px;color:var(--muted-foreground);">oleh <strong style="color:var(--foreground);"><%= lg.logged_by_name %></strong></span>
+            <% } %>
+          </div>
+
+          <% if (lg.log) { %>
+          <p style="font-size:13.5px;font-weight:500;margin-bottom:6px;"><%= lg.log %></p>
+          <% } %>
+
+          <% if (lg.description) { %>
+          <p style="font-size:13.5px;color:var(--muted-foreground);line-height:1.6;margin-bottom:6px;"><%= lg.description %></p>
+          <% } %>
+
+          <% if (lg.log_file) { %>
+          <div style="margin-top:8px;">
+            <a href="<%= lg.log_file %>" target="_blank"
+               style="display:inline-block;border-radius:8px;overflow:hidden;border:1px solid var(--border);">
+              <img src="<%= lg.log_file %>" alt="Foto laporan"
+                   style="max-width:240px;max-height:160px;object-fit:cover;display:block;"
+                   onerror="this.parentElement.style.display='none'"/>
+            </a>
+          </div>
+          <% } %>
+
+          <% if (lg.verification_file) { %>
+          <div style="margin-top:8px;">
+            <div style="font-size:11.5px;color:var(--muted-foreground);margin-bottom:4px;">Bukti verifikasi:</div>
+            <a href="<%= lg.verification_file %>" target="_blank"
+               style="display:inline-block;border-radius:8px;overflow:hidden;border:1px solid var(--border);">
+              <img src="<%= lg.verification_file %>" alt="Bukti verifikasi"
+                   style="max-width:240px;max-height:160px;object-fit:cover;display:block;"
+                   onerror="this.parentElement.style.display='none'"/>
+            </a>
+          </div>
+          <% } %>
+        </div>
+      </div>
+      <% }); %>
+    </div>
+    <% } %>
+  </div>
+
+  <!-- Back button -->
+  <div style="margin-top:16px;">
+    <a href="/laporan" class="btn-outline" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;font-size:13px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      Kembali ke Daftar Laporan
+    </a>
+  </div>
+
+</div>
+
+<%- include('../partials/footer') %>

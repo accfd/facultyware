@@ -1,3 +1,58 @@
-<h1><%= message %></h1>
-<h2><%= error.status %></h2>
-<pre><%= error.stack %></pre>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Error <%= error.status || 500 %> — Maintenance Ruangan FTI</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #0a1628 0%, #0f2d6b 50%, #0e1f4d 100%);
+      color: #fff;
+      padding: 24px;
+    }
+    .error-card {
+      text-align: center;
+      max-width: 480px;
+      width: 100%;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 24px;
+      padding: 48px 40px;
+      backdrop-filter: blur(16px);
+    }
+    .error-code {
+      font-size: 80px; font-weight: 800; line-height: 1;
+      background: linear-gradient(135deg, #93c5fd, #60a5fa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin-bottom: 16px;
+    }
+    .error-title { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 12px; }
+    .error-message { font-size: 14px; color: rgba(148,163,184,0.85); line-height: 1.6; margin-bottom: 32px; }
+    .btn-wrap { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn { display: inline-block; padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; border: none; transition: transform 0.2s, box-shadow 0.2s; }
+    .btn-primary { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; box-shadow: 0 4px 16px rgba(37,99,235,0.4); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,99,235,0.5); }
+    .btn-secondary { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.2); }
+    .btn-secondary:hover { background: rgba(255,255,255,0.15); }
+  </style>
+</head>
+<body>
+  <div class="error-card">
+    <div class="error-code"><%= error.status || 500 %></div>
+    <div class="error-title">
+      <% if (error.status == 403) { %>Akses Ditolak
+      <% } else if (error.status == 404) { %>Halaman Tidak Ditemukan
+      <% } else { %>Terjadi Kesalahan<% } %>
+    </div>
+    <div class="error-message"><%= message || 'Terjadi kesalahan yang tidak terduga.' %></div>
+    <div class="btn-wrap">
+      <button class="btn btn-secondary" onclick="history.back()">← Kembali</button>
+      <a href="/login" class="btn btn-primary">Ke Halaman Login</a>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,234 @@
+<%- include('../partials/header', {
+  title:       'Buat Laporan',
+  currentPath: '/laporan/buat',
+  userRole:    typeof userRole !== 'undefined' ? userRole : '',
+  userName:    typeof userName !== 'undefined' ? userName : '',
+  flash:       typeof flash !== 'undefined' ? flash : null
+}) %>
+
+<%
+  const _rooms  = typeof rooms  !== 'undefined' ? rooms  : [];
+  const _errors = typeof errors !== 'undefined' && errors ? errors : [];
+  const _old    = typeof old    !== 'undefined' ? old    : {};
+
+  // Kelompokkan ruangan per gedung
+  const _grouped = {};
+  _rooms.forEach(function(r) {
+    if (!_grouped[r.building_name]) _grouped[r.building_name] = [];
+    _grouped[r.building_name].push(r);
+  });
+
+  function fieldError(field) {
+    return _errors.find(function(e) { return e.field === field; });
+  }
+%>
+
+<!-- Breadcrumb -->
+<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted-foreground);margin-bottom:20px;">
+  <a href="/laporan" style="color:var(--muted-foreground);text-decoration:none;">Laporan Saya</a>
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+  <span style="color:var(--foreground);">Buat Laporan</span>
+</div>
+
+<div style="max-width:640px;">
+  <div style="margin-bottom:24px;">
+    <h1 style="font-size:20px;font-weight:700;margin-bottom:4px;">Buat Laporan Kerusakan</h1>
+    <p style="font-size:13px;color:var(--muted-foreground);">Isi form di bawah untuk melaporkan kerusakan ruangan.</p>
+  </div>
+
+  <% if (_errors.length > 0 && !fieldError('room_id') && !fieldError('issue_description')) { %>
+  <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:flex-start;gap:10px;">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" style="flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <div>
+      <% _errors.forEach(function(e) { %>
+      <p style="font-size:13.5px;color:#dc2626;margin:0;"><%= e.msg %></p>
+      <% }); %>
+    </div>
+  </div>
+  <% } %>
+
+  <div class="card" style="padding:24px;">
+    <form action="/laporan" method="POST" enctype="multipart/form-data" id="laporanForm">
+
+      <!-- Ruangan -->
+      <div style="margin-bottom:20px;">
+        <label for="room_id" style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">
+          Ruangan <span style="color:#dc2626;">*</span>
+        </label>
+        <select id="room_id" name="room_id"
+                style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid <%- fieldError('room_id') ? '#fca5a5' : 'var(--border)' %>;background:var(--background);color:var(--foreground);font-size:14px;outline:none;cursor:pointer;">
+          <option value="">-- Pilih Ruangan --</option>
+          <% Object.keys(_grouped).forEach(function(bName) { %>
+          <optgroup label="<%= bName %>">
+            <% _grouped[bName].forEach(function(r) { %>
+            <option value="<%= r.id %>" <%= (_old.room_id && String(_old.room_id) === String(r.id)) ? 'selected' : '' %>>
+              <%= r.name %> (<%= r.code %>)
+            </option>
+            <% }); %>
+          </optgroup>
+          <% }); %>
+        </select>
+        <% if (fieldError('room_id')) { %>
+        <p id="err-room_id" style="font-size:12px;color:#dc2626;margin-top:4px;"><%= fieldError('room_id').msg %></p>
+        <% } else { %>
+        <p id="err-room_id" style="font-size:12px;color:#dc2626;margin-top:4px;display:none;"></p>
+        <% } %>
+      </div>
+
+      <!-- Deskripsi kerusakan -->
+      <div style="margin-bottom:20px;">
+        <label for="issue_description" style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">
+          Deskripsi Kerusakan <span style="color:#dc2626;">*</span>
+        </label>
+        <textarea id="issue_description" name="issue_description" rows="5"
+                  placeholder="Jelaskan kerusakan yang terjadi secara detail (minimal 20 karakter)..."
+                  style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid <%- fieldError('issue_description') ? '#fca5a5' : 'var(--border)' %>;background:var(--background);color:var(--foreground);font-size:14px;resize:vertical;outline:none;font-family:inherit;"
+                  maxlength="1000"><%= _old.issue_description ? _old.issue_description : '' %></textarea>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;">
+          <p id="err-issue_description" style="font-size:12px;color:#dc2626;<%= fieldError('issue_description') ? '' : 'display:none;' %>">
+            <%= fieldError('issue_description') ? fieldError('issue_description').msg : '' %>
+          </p>
+          <span id="charCount" style="font-size:12px;color:var(--muted-foreground);margin-left:auto;">
+            <%= _old.issue_description ? _old.issue_description.length : 0 %>/1000
+          </span>
+        </div>
+      </div>
+
+      <!-- Foto -->
+      <div style="margin-bottom:24px;">
+        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">
+          Foto Kerusakan <span style="font-weight:400;color:var(--muted-foreground);">(opsional)</span>
+        </label>
+
+        <!-- Preview area -->
+        <div id="previewWrap" style="display:none;margin-bottom:10px;">
+          <img id="previewImg" src="" alt="Preview" style="max-width:100%;max-height:220px;border-radius:8px;border:1px solid var(--border);object-fit:cover;"/>
+          <button type="button" id="removePhoto" style="display:block;margin-top:6px;font-size:12px;color:#dc2626;background:none;border:none;cursor:pointer;padding:0;">
+            ✕ Hapus foto
+          </button>
+        </div>
+
+        <label for="foto"
+               style="display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;border-radius:8px;border:2px dashed var(--border);background:var(--muted);cursor:pointer;font-size:13.5px;color:var(--muted-foreground);transition:border-color .15s;"
+               id="fotoLabel">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span id="fotoLabelText">Klik untuk pilih foto (JPG/PNG, maks 5MB)</span>
+        </label>
+        <input type="file" id="foto" name="foto" accept="image/jpeg,image/png" style="display:none;"/>
+        <p id="err-foto" style="font-size:12px;color:#dc2626;margin-top:4px;display:none;"></p>
+      </div>
+
+      <!-- Actions -->
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <a href="/laporan" class="btn-outline" style="text-decoration:none;">Batal</a>
+        <button type="submit" id="submitBtn" class="btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Kirim Laporan
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<script>
+// ── Counter karakter ──────────────────────────────────────────────────────────
+const descEl    = document.getElementById('issue_description');
+const charCount = document.getElementById('charCount');
+descEl.addEventListener('input', function() {
+  charCount.textContent = this.value.length + '/1000';
+});
+
+// ── Preview foto ──────────────────────────────────────────────────────────────
+const fotoInput   = document.getElementById('foto');
+const previewWrap = document.getElementById('previewWrap');
+const previewImg  = document.getElementById('previewImg');
+const removeBtn   = document.getElementById('removePhoto');
+const fotoLabel   = document.getElementById('fotoLabel');
+const fotoLblTxt  = document.getElementById('fotoLabelText');
+const errFoto     = document.getElementById('err-foto');
+
+fotoInput.addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+
+  // Validasi tipe
+  if (!['image/jpeg','image/jpg','image/png'].includes(file.type)) {
+    errFoto.textContent = 'Hanya file JPG/PNG yang diperbolehkan.';
+    errFoto.style.display = 'block';
+    this.value = '';
+    return;
+  }
+  // Validasi ukuran (5MB)
+  if (file.size > 5 * 1024 * 1024) {
+    errFoto.textContent = 'Ukuran file maksimal 5MB.';
+    errFoto.style.display = 'block';
+    this.value = '';
+    return;
+  }
+  errFoto.style.display = 'none';
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    previewImg.src = e.target.result;
+    previewWrap.style.display = 'block';
+    fotoLabel.style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+  fotoLblTxt.textContent = file.name;
+});
+
+removeBtn.addEventListener('click', function() {
+  fotoInput.value = '';
+  previewWrap.style.display = 'none';
+  fotoLabel.style.display = 'flex';
+  fotoLblTxt.textContent = 'Klik untuk pilih foto (JPG/PNG, maks 5MB)';
+  previewImg.src = '';
+});
+
+// ── Validasi client-side saat submit ─────────────────────────────────────────
+const form      = document.getElementById('laporanForm');
+const submitBtn = document.getElementById('submitBtn');
+const errRoom   = document.getElementById('err-room_id');
+const errDesc   = document.getElementById('err-issue_description');
+const roomSel   = document.getElementById('room_id');
+
+form.addEventListener('submit', function(e) {
+  let valid = true;
+
+  // Ruangan
+  if (!roomSel.value) {
+    errRoom.textContent = 'Ruangan wajib dipilih.';
+    errRoom.style.display = 'block';
+    roomSel.style.borderColor = '#fca5a5';
+    valid = false;
+  } else {
+    errRoom.style.display = 'none';
+    roomSel.style.borderColor = 'var(--border)';
+  }
+
+  // Deskripsi
+  const descVal = descEl.value.trim();
+  if (!descVal || descVal.length < 20) {
+    errDesc.textContent = 'Deskripsi kerusakan minimal 20 karakter.';
+    errDesc.style.display = 'block';
+    descEl.style.borderColor = '#fca5a5';
+    valid = false;
+  } else {
+    errDesc.style.display = 'none';
+    descEl.style.borderColor = 'var(--border)';
+  }
+
+  if (!valid) {
+    e.preventDefault();
+    document.querySelector('[style*="borderColor: #fca5a5"]') &&
+      document.querySelector('[style*="borderColor: #fca5a5"]').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Mengirim…';
+});
+</script>
+
+<%- include('../partials/footer') %>
