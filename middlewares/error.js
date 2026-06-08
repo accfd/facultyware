@@ -10,9 +10,10 @@ const errorHandler = (err, req, res, next) => {
   const status  = err.status || err.statusCode || 500;
   const message = err.message || 'Terjadi kesalahan yang tidak terduga.';
 
-  // Untuk request API/AJAX, kembalikan JSON
-  if (req.xhr || (req.headers.accept && req.headers.accept.includes('application/json'))) {
-    return res.status(status).json({ error: message });
+  // Untuk request API (/api/) selalu kembalikan JSON
+  if (req.path.startsWith('/api/') || req.xhr ||
+      (req.headers.accept && req.headers.accept.includes('application/json'))) {
+    return res.status(status).json({ success: false, message });
   }
 
   res.status(status);

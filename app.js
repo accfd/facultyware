@@ -13,6 +13,7 @@ var laporanRouter       = require('./routes/laporan');
 var pjLaporanRouter     = require('./routes/pj/laporan');
 var maintenanceRouter   = require('./routes/pj/maintenance');
 var pengelolaRouter     = require('./routes/pengelola');
+var apiRouter           = require('./routes/api');
 const { notFoundHandler, errorHandler } = require('./middlewares/error');
 
 var app = express();
@@ -60,6 +61,7 @@ app.use('/laporan',     laporanRouter);
 app.use('/pj/laporan',  pjLaporanRouter);
 app.use('/maintenance', maintenanceRouter);
 app.use('/penugasan',   pengelolaRouter);
+app.use('/api/v1',      apiRouter);
 
 // 404 & error handler
 app.use(notFoundHandler);
