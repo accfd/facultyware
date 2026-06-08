@@ -9,30 +9,30 @@ const index = (req, res) => {
 
 const loginPage = (req, res) => {
   if (req.session.userId) return roleRedirect(req, res);
-  res.render('auth/login', { title: 'Login — Maintenance Ruangan FTI', errors: null, old: {} });
+  res.render('login', { title: 'Login — Sistem Maintenance Ruangan (Fisik)', error: null });
 };
 
 const login = async (req, res, next) => {
-  const { email, password } = req.body;
+  // Field "username" di form login.ejs dicocokkan ke kolom email di DB
+  const username = (req.body.username || req.body.email || '').trim();
+  const password = req.body.password || '';
 
   // Validasi input dasar
-  if (!email || !password) {
-    return res.render('auth/login', {
-      title: 'Login — Maintenance Ruangan FTI',
-      errors: ['Email dan password wajib diisi.'],
-      old: { email },
+  if (!username || !password) {
+    return res.render('login', {
+      title: 'Login — Sistem Maintenance Ruangan (Fisik)',
+      error: 'Username dan password wajib diisi.',
     });
   }
 
   try {
     // 1. Cari user berdasarkan email
-    const [rows] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+    const [rows] = await db.query('SELECT * FROM users WHERE email = ?', [username]);
 
     if (rows.length === 0) {
-      return res.render('auth/login', {
-        title: 'Login — Maintenance Ruangan FTI',
-        errors: ['Email atau password salah.'],
-        old: { email },
+      return res.render('login', {
+        title: 'Login — Sistem Maintenance Ruangan (Fisik)',
+        error: 'Username atau password salah.',
       });
     }
 
@@ -41,10 +41,9 @@ const login = async (req, res, next) => {
     // 2. Verifikasi password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.render('auth/login', {
-        title: 'Login — Maintenance Ruangan FTI',
-        errors: ['Email atau password salah.'],
-        old: { email },
+      return res.render('login', {
+        title: 'Login — Sistem Maintenance Ruangan (Fisik)',
+        error: 'Username atau password salah.',
       });
     }
 

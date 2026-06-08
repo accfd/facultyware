@@ -58,12 +58,15 @@ const index = async (req, res, next) => {
 
     const totalPages = Math.ceil(total / PAGE_SIZE);
 
+    const flash = req.session.flash || null;
+    delete req.session.flash;
+
     res.render('laporan/index', {
       title:       'Laporan Saya',
       currentPath: '/laporan',
       userRole:    req.session.userRole,
       userName:    req.session.userName,
-      flash:       req.session.flash || null,
+      flash,
       laporan,
       STATUS_INFO,
       status,
@@ -71,7 +74,6 @@ const index = async (req, res, next) => {
       totalPages,
       total,
     });
-    delete req.session.flash;
   } catch (err) { next(err); }
 };
 
@@ -87,17 +89,19 @@ const create = async (req, res, next) => {
        ORDER BY b.name, r.name`
     );
 
+    const flash = req.session.flash || null;
+    delete req.session.flash;
+
     res.render('laporan/create', {
       title:       'Buat Laporan',
       currentPath: '/laporan/buat',
       userRole:    req.session.userRole,
       userName:    req.session.userName,
-      flash:       req.session.flash || null,
+      flash,
       rooms,
       errors:      null,
       old:         {},
     });
-    delete req.session.flash;
   } catch (err) { next(err); }
 };
 
@@ -221,17 +225,19 @@ const show = async (req, res, next) => {
       [id]
     );
 
+    const flash = req.session.flash || null;
+    delete req.session.flash;
+
     res.render('laporan/show', {
       title:       `Laporan #${String(id).padStart(5, '0')}`,
       currentPath: '/laporan',
       userRole:    req.session.userRole,
       userName:    req.session.userName,
-      flash:       req.session.flash || null,
+      flash,
       laporan,
       logs,
       STATUS_INFO,
     });
-    delete req.session.flash;
   } catch (err) { next(err); }
 };
 

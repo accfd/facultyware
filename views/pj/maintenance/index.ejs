@@ -117,7 +117,12 @@
         <tr style="border-bottom:1px solid var(--border);transition:background .1s;"
             onmouseover="this.style.background='var(--muted)'" onmouseout="this.style.background=''">
           <td style="padding:12px 14px;color:var(--muted-foreground);"><%= no %></td>
-          <td style="padding:12px 14px;font-weight:500;white-space:nowrap;"><%= m.room_name %></td>
+          <td style="padding:12px 14px;font-weight:500;white-space:nowrap;">
+            <%= m.room_name %>
+            <% if (m.has_update) { %>
+            <span style="display:inline-flex;align-items:center;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:700;background:#7e22ce;color:#fff;margin-left:5px;letter-spacing:.03em;">UPDATE</span>
+            <% } %>
+          </td>
           <td style="padding:12px 14px;color:var(--muted-foreground);white-space:nowrap;"><%= m.building_name %></td>
           <td style="padding:12px 14px;max-width:180px;">
             <span title="<%= m.issue_description %>"><%= trunc(m.issue_description, 45) %></span>
@@ -126,8 +131,7 @@
             <%= m.pengelola_name || '<span style="font-style:italic;opacity:.6;">Belum ditugaskan</span>' %>
           </td>
           <td style="padding:12px 14px;white-space:nowrap;">
-            <span style="display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;
-                         background:<%= si.bg %>;color:<%= si.color %>;border:1px solid <%= si.border %>;">
+            <span class="status-badge status-<%= m.status %>">
               <%= si.text %>
             </span>
           </td>

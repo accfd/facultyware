@@ -92,19 +92,22 @@
             <span title="<%= l.issue_description %>"><%= trunc(l.issue_description, 60) %></span>
           </td>
           <td style="padding:12px 14px;">
-            <span style="display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;
-                         background:<%= si.bg %>;color:<%= si.color %>;border:1px solid <%= si.border %>;">
+            <span class="status-badge status-<%= l.status %>">
               <%= si.text %>
             </span>
           </td>
           <td style="padding:12px 14px;white-space:nowrap;color:var(--muted-foreground);"><%= fmtDate(l.reported_at) %></td>
           <td style="padding:12px 14px;text-align:center;">
             <div style="display:inline-flex;gap:6px;">
-              <a href="/laporan/<%= l.id %>" class="btn-outline btn-sm" style="font-size:12px;padding:4px 10px;display:inline-flex;align-items:center;gap:4px;text-decoration:none;">
+              <a href="/laporan/<%= l.id %>"
+                 style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:500;border:1px solid var(--border);color:var(--foreground);text-decoration:none;background:var(--background);"
+                 title="Lihat detail">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
                 Detail
               </a>
-              <a href="/laporan/<%= l.id %>/pdf" class="btn-outline btn-sm" style="font-size:12px;padding:4px 10px;display:inline-flex;align-items:center;gap:4px;text-decoration:none;color:var(--muted-foreground);">
+              <a href="/laporan/<%= l.id %>/pdf"
+                 style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:500;border:1px solid var(--border);color:var(--muted-foreground);text-decoration:none;background:var(--background);"
+                 title="Download PDF">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 PDF
               </a>
@@ -124,7 +127,10 @@
     </span>
     <div style="display:flex;gap:6px;">
       <% if (_page > 1) { %>
-      <a href="/laporan?status=<%= _status %>&page=<%= _page - 1 %>" class="btn-outline btn-sm" style="font-size:12px;text-decoration:none;">← Sebelumnya</a>
+      <a href="/laporan?status=<%= _status %>&page=<%= _page - 1 %>"
+         style="display:inline-flex;align-items:center;padding:5px 12px;border-radius:6px;font-size:12px;border:1px solid var(--border);text-decoration:none;color:var(--foreground);background:var(--background);">
+        ← Sebelumnya
+      </a>
       <% } %>
       <% for (let p = 1; p <= _totalPages; p++) { %>
       <a href="/laporan?status=<%= _status %>&page=<%= p %>"
@@ -134,7 +140,10 @@
       </a>
       <% } %>
       <% if (_page < _totalPages) { %>
-      <a href="/laporan?status=<%= _status %>&page=<%= _page + 1 %>" class="btn-outline btn-sm" style="font-size:12px;text-decoration:none;">Berikutnya →</a>
+      <a href="/laporan?status=<%= _status %>&page=<%= _page + 1 %>"
+         style="display:inline-flex;align-items:center;padding:5px 12px;border-radius:6px;font-size:12px;border:1px solid var(--border);text-decoration:none;color:var(--foreground);background:var(--background);">
+        Berikutnya →
+      </a>
       <% } %>
     </div>
   </div>

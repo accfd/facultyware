@@ -34,7 +34,7 @@
   <span style="color:var(--foreground);">Detail Laporan</span>
 </div>
 
-<div style="max-width:800px;">
+<div style="max-width:800px; margin: 0 auto;">
 
   <!-- Header card -->
   <div class="card" style="padding:24px;margin-bottom:20px;">
@@ -43,9 +43,8 @@
         <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:4px;">Nomor Laporan</div>
         <div style="font-size:20px;font-weight:700;">LPR-<%= String(_l.id).padStart(5, '0') %></div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        <span style="display:inline-flex;align-items:center;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;
-                     background:<%= si.bg %>;color:<%= si.color %>;border:1px solid <%= si.border %>;">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span class="status-badge status-<%= _l.status %>" style="padding:5px 14px;font-size:13px;">
           <%= si.text %>
         </span>
         <!-- Download PDF -->
@@ -93,11 +92,13 @@
   <!-- Tombol aksi -->
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
     <!-- Edit -->
+    <% if (_l.status === 'reported') { %>
     <a href="/pj/laporan/<%= _l.id %>/edit"
        style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:500;border:1px solid var(--border);text-decoration:none;color:var(--foreground);background:var(--background);">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       Edit Laporan
     </a>
+    <% } %>
 
     <!-- Buat Maintenance (hanya jika status=reported) -->
     <% if (_l.status === 'reported') { %>
@@ -109,6 +110,7 @@
     <% } %>
 
     <!-- Hapus -->
+    <% if (_l.status === 'reported') { %>
     <form method="POST" action="/pj/laporan/<%= _l.id %>?_method=DELETE" style="display:inline;"
           onsubmit="return confirm('Yakin ingin menghapus laporan ini? Semua riwayat terkait akan ikut terhapus dan tidak dapat dikembalikan.')">
       <input type="hidden" name="_method" value="DELETE"/>
@@ -118,6 +120,7 @@
         Hapus Laporan
       </button>
     </form>
+    <% } %>
   </div>
 
   <!-- Timeline log -->

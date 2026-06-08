@@ -13,8 +13,10 @@ var laporanRouter       = require('./routes/laporan');
 var pjLaporanRouter     = require('./routes/pj/laporan');
 var maintenanceRouter   = require('./routes/pj/maintenance');
 var pengelolaRouter     = require('./routes/pengelola');
+var progresRouter       = require('./routes/progres');
 var apiRouter           = require('./routes/api');
 const { notFoundHandler, errorHandler } = require('./middlewares/error');
+const badgeMiddleware   = require('./middlewares/badge');
 
 var app = express();
 
@@ -54,6 +56,15 @@ app.use(session({
   cookie: { maxAge: 1000 * 60 * 60 * 24, httpOnly: true },
 }));
 
+// Badge middleware global (setelah session)
+app.use(badgeMiddleware);
+
+// Middleware untuk menonaktifkan cache pada respons HTML agar flash message tidak berulang saat navigasi
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  next();
+});
+
 // Routes
 app.use('/',            indexRouter);
 app.use('/dashboard',   dashboardRouter);
@@ -61,6 +72,7 @@ app.use('/laporan',     laporanRouter);
 app.use('/pj/laporan',  pjLaporanRouter);
 app.use('/maintenance', maintenanceRouter);
 app.use('/penugasan',   pengelolaRouter);
+app.use('/progres',     progresRouter);
 app.use('/api/v1',      apiRouter);
 
 // 404 & error handler

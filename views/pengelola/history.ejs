@@ -1,6 +1,6 @@
 <%- include('../partials/header', {
-  title:       'Penugasan Aktif',
-  currentPath: '/penugasan',
+  title:       'Riwayat Progres',
+  currentPath: '/progres',
   userRole:    typeof userRole !== 'undefined' ? userRole : '',
   userName:    typeof userName !== 'undefined' ? userName : '',
   flash:       typeof flash !== 'undefined' ? flash : null
@@ -26,24 +26,29 @@
     const p = [];
     if (q.search) p.push('search=' + encodeURIComponent(q.search));
     if (q.page > 1) p.push('page=' + q.page);
-    return '/penugasan' + (p.length ? '?' + p.join('&') : '');
+    return '/progres' + (p.length ? '?' + p.join('&') : '');
   }
 %>
 
 <!-- Page heading -->
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
   <div>
-    <h1 style="font-size:20px;font-weight:700;margin-bottom:4px;">Penugasan Aktif</h1>
+    <h1 style="font-size:20px;font-weight:700;margin-bottom:4px;">Riwayat Progres</h1>
     <p style="font-size:13px;color:var(--muted-foreground);">
-      Daftar ruangan yang perlu Anda perbaiki
-      <% if (_total > 0) { %>— <strong><%= _total %></strong> penugasan aktif<% } %>
+      Daftar penugasan yang telah selesai dikerjakan
+      <% if (_total > 0) { %>— <strong><%= _total %></strong> penugasan selesai<% } %>
     </p>
   </div>
+  <a href="/penugasan"
+     style="display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:6px;font-size:13px;font-weight:500;border:1px solid var(--border);text-decoration:none;color:var(--foreground);background:var(--background);">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    Penugasan Aktif
+  </a>
 </div>
 
 <!-- Search -->
 <div class="card" style="padding:16px;margin-bottom:20px;">
-  <form method="GET" action="/penugasan" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+  <form method="GET" action="/progres" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
     <div style="flex:1;min-width:200px;">
       <label style="display:block;font-size:12px;font-weight:600;color:var(--muted-foreground);margin-bottom:5px;">Cari Ruangan</label>
       <div style="position:relative;">
@@ -61,7 +66,7 @@
         Cari
       </button>
       <% if (_search) { %>
-      <a href="/penugasan" class="btn-outline"
+      <a href="/progres" class="btn-outline"
          style="height:36px;font-size:13px;padding:0 14px;display:inline-flex;align-items:center;gap:6px;text-decoration:none;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         Reset
@@ -77,14 +82,13 @@
   <div style="padding:48px;text-align:center;color:var(--muted-foreground);">
     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
          style="margin:0 auto 12px;display:block;opacity:.4;">
-      <path d="M9 11l3 3L22 4"/>
-      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+      <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/>
     </svg>
     <p style="font-size:14px;">
-      <% if (_search) { %>Tidak ada penugasan yang cocok dengan pencarian.<% } else { %>Belum ada penugasan aktif untuk Anda.<% } %>
+      <% if (_search) { %>Tidak ada riwayat yang cocok dengan pencarian.<% } else { %>Belum ada penugasan yang selesai.<% } %>
     </p>
     <% if (_search) { %>
-    <a href="/penugasan" class="btn-outline"
+    <a href="/progres" class="btn-outline"
        style="margin-top:12px;display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-size:13px;">
       Tampilkan Semua
     </a>
@@ -100,7 +104,7 @@
           <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);">Gedung</th>
           <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);">Deskripsi</th>
           <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);">Penanggung Jawab</th>
-          <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);white-space:nowrap;">Tgl Laporan</th>
+          <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);white-space:nowrap;">Tgl Selesai</th>
           <th style="padding:10px 14px;text-align:center;font-weight:600;color:var(--muted-foreground);">Progres</th>
           <th style="padding:10px 14px;text-align:center;font-weight:600;color:var(--muted-foreground);">Aksi</th>
         </tr>
@@ -114,25 +118,21 @@
           <td style="padding:12px 14px;color:var(--muted-foreground);"><%= no %></td>
           <td style="padding:12px 14px;font-weight:500;white-space:nowrap;">
             <%= p.room_name %>
-            <% if (p.jumlah_progres === 0) { %>
-            <span style="display:inline-flex;align-items:center;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:700;background:#dc2626;color:#fff;margin-left:5px;letter-spacing:.03em;">BARU</span>
-            <% } %>
-            <% if (p.has_revisi) { %>
-            <span style="display:inline-flex;align-items:center;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:700;background:#d97706;color:#fff;margin-left:5px;letter-spacing:.03em;">REVISI</span>
-            <% } %>
           </td>
           <td style="padding:12px 14px;color:var(--muted-foreground);white-space:nowrap;"><%= p.building_name %></td>
           <td style="padding:12px 14px;max-width:200px;">
             <span title="<%= p.issue_description %>"><%= trunc(p.issue_description, 50) %></span>
           </td>
           <td style="padding:12px 14px;color:var(--muted-foreground);white-space:nowrap;"><%= p.penanggung_jawab_name %></td>
-          <td style="padding:12px 14px;white-space:nowrap;color:var(--muted-foreground);"><%= fmtDate(p.reported_at) %></td>
+          <td style="padding:12px 14px;white-space:nowrap;color:var(--muted-foreground);">
+            <%= fmtDate(p.resolved_at || p.reported_at) %>
+          </td>
           <td style="padding:12px 14px;text-align:center;">
             <span style="display:inline-flex;align-items:center;justify-content:center;
                          min-width:32px;height:28px;padding:0 10px;border-radius:20px;
                          font-size:12px;font-weight:600;
-                         background:<%= p.jumlah_progres > 0 ? '#faf5ff' : 'var(--muted)' %>;
-                         color:<%= p.jumlah_progres > 0 ? '#7e22ce' : 'var(--muted-foreground)' %>;">
+                         background:<%= p.jumlah_progres > 0 ? '#f0fdf4' : 'var(--muted)' %>;
+                         color:<%= p.jumlah_progres > 0 ? '#15803d' : 'var(--muted-foreground)' %>;">
               <%= p.jumlah_progres %>×
             </span>
           </td>

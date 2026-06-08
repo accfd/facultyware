@@ -31,26 +31,82 @@
   const isResolved = _l.status === 'resolved';
 %>
 
+<style>
+  .revision-alert {
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .revision-alert svg {
+    stroke: #d97706;
+  }
+  .revision-alert .alert-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #92400e;
+    margin-bottom: 4px;
+  }
+  .revision-alert .alert-note {
+    font-size: 13px;
+    color: #92400e;
+    line-height: 1.55;
+    margin: 0;
+  }
+  .revision-alert .alert-action {
+    font-size: 12px;
+    color: #b45309;
+    margin-top: 6px;
+    margin-bottom: 0;
+  }
+  
+  .dark .revision-alert {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+  }
+  .dark .revision-alert svg {
+    stroke: #fbbf24;
+  }
+  .dark .revision-alert .alert-title {
+    color: #fbbf24;
+  }
+  .dark .revision-alert .alert-note {
+    color: #fef08a;
+  }
+  .dark .revision-alert .alert-action {
+    color: #fef08a;
+    opacity: 0.8;
+  }
+</style>
+
 <!-- Breadcrumb -->
 <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted-foreground);margin-bottom:20px;">
-  <a href="/penugasan" style="color:var(--muted-foreground);text-decoration:none;">Penugasan Aktif</a>
+  <% if (isResolved) { %>
+    <a href="/progres" style="color:var(--muted-foreground);text-decoration:none;">Riwayat Progres</a>
+  <% } else { %>
+    <a href="/penugasan" style="color:var(--muted-foreground);text-decoration:none;">Penugasan Aktif</a>
+  <% } %>
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
   <span style="color:var(--foreground);">Detail Penugasan</span>
 </div>
 
-<div style="max-width:820px;">
+<div style="max-width:820px; margin: 0 auto;">
 
   <!-- Alert Revisi — tampil jika log terakhir adalah revisi -->
   <% if (_hasRevisi && _revNote) { %>
-  <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:16px 18px;margin-bottom:20px;display:flex;align-items:flex-start;gap:12px;">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" style="flex-shrink:0;margin-top:1px;">
+  <div class="revision-alert">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2" style="flex-shrink:0;margin-top:1px;">
       <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
       <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
     </svg>
     <div>
-      <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:4px;">⚠ Ada Permintaan Revisi dari Penanggung Jawab</div>
-      <p style="font-size:13px;color:#92400e;line-height:1.55;margin:0;"><%= _revNote %></p>
-      <p style="font-size:12px;color:#b45309;margin-top:6px;margin-bottom:0;">Silakan perbaiki dan kirim update progres baru di bawah.</p>
+      <div class="alert-title">⚠ Ada Permintaan Revisi dari Penanggung Jawab</div>
+      <p class="alert-note"><%= _revNote %></p>
+      <p class="alert-action">Silakan perbaiki dan kirim update progres baru di bawah.</p>
     </div>
   </div>
   <% } %>
@@ -62,9 +118,8 @@
         <div style="font-size:12px;color:var(--muted-foreground);margin-bottom:4px;">Nomor Penugasan</div>
         <div style="font-size:20px;font-weight:700;">PNT-<%= String(_l.id).padStart(5,'0') %></div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        <span style="display:inline-flex;align-items:center;padding:5px 14px;border-radius:20px;font-size:13px;font-weight:600;
-                     background:<%= si.bg %>;color:<%= si.color %>;border:1px solid <%= si.border %>;">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span class="status-badge status-<%= _l.status %>" style="padding: 5px 14px; font-size: 13px;">
           <%= si.text %>
         </span>
         <a href="/penugasan/<%= _l.id %>/pdf"
@@ -72,11 +127,20 @@
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           PDF Permohonan
         </a>
-        <a href="/penugasan/<%= _l.id %>/pdf-hasil"
-           style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:6px;font-size:12.5px;font-weight:500;border:1px solid #bbf7d0;color:#15803d;text-decoration:none;background:#f0fdf4;">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          PDF Hasil
-        </a>
+        <% if (isResolved) { %>
+          <a href="/penugasan/<%= _l.id %>/pdf-hasil"
+             style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:6px;font-size:12.5px;font-weight:500;border:1px solid #bbf7d0;color:#15803d;text-decoration:none;background:#f0fdf4;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            PDF Hasil
+          </a>
+        <% } else { %>
+          <button type="button" disabled
+                  title="PDF Hasil belum tersedia sebelum permohonan dinyatakan selesai"
+                  style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:6px;font-size:12.5px;font-weight:500;border:1px solid var(--border);color:var(--muted-foreground);background:var(--muted);cursor:not-allowed;opacity:0.6;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            PDF Hasil
+          </button>
+        <% } %>
       </div>
     </div>
 
@@ -184,85 +248,96 @@
 
   <!-- Form Upload Progres — hanya jika belum resolved -->
   <% if (!isResolved) { %>
-  <div class="card" style="padding:24px;" id="formProgres">
-    <h2 style="font-size:15px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px;">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    <% if (typeof canSubmitProgres !== 'undefined' && canSubmitProgres) { %>
+    <div class="card" style="padding:24px;" id="formProgres">
+      <h2 style="font-size:15px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Kirim Update Progres
+      </h2>
+      <p style="font-size:13px;color:var(--muted-foreground);margin-bottom:20px;">
+        Upload foto bukti perbaikan beserta deskripsi pekerjaan yang sudah dilakukan.
+      </p>
+
+      <form method="POST" action="/penugasan/<%= _l.id %>/progres"
+            enctype="multipart/form-data" id="progresForm">
+
+        <!-- Foto (wajib) -->
+        <div style="margin-bottom:20px;">
+          <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">
+            Foto Bukti Perbaikan <span style="color:#dc2626;">*</span>
+          </label>
+
+          <!-- Preview -->
+          <div id="previewWrap" style="display:none;margin-bottom:10px;position:relative;">
+            <img id="previewImg" src="" alt="Preview"
+                 style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--border);object-fit:cover;display:block;"/>
+            <button type="button" id="removePhoto"
+                    style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.55);border:none;cursor:pointer;
+                           border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;
+                           color:white;font-size:14px;line-height:1;">×</button>
+          </div>
+
+          <label for="foto" id="fotoLabel"
+                 style="display:flex;align-items:center;justify-content:center;gap:8px;
+                        padding:18px;border-radius:8px;border:2px dashed var(--border);
+                        background:var(--muted);cursor:pointer;font-size:13.5px;color:var(--muted-foreground);
+                        transition:border-color .15s;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+            <span id="fotoLblTxt">Klik untuk pilih foto (JPG/PNG, maks 5MB)</span>
+          </label>
+          <input type="file" id="foto" name="foto" accept="image/jpeg,image/png" style="display:none;"/>
+          <p id="errFoto" style="font-size:12px;color:#dc2626;margin-top:4px;display:none;"></p>
+        </div>
+
+        <!-- Deskripsi (wajib) -->
+        <div style="margin-bottom:24px;">
+          <label for="description" style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">
+            Deskripsi Pekerjaan <span style="color:#dc2626;">*</span>
+            <span style="font-weight:400;color:var(--muted-foreground);">(min. 20 karakter)</span>
+          </label>
+          <textarea id="description" name="description" rows="4"
+                    placeholder="Jelaskan pekerjaan perbaikan yang sudah dilakukan secara detail..."
+                    style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);
+                           background:var(--background);color:var(--foreground);font-size:14px;
+                           resize:vertical;outline:none;font-family:inherit;box-sizing:border-box;"></textarea>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;">
+            <p id="errDesc" style="font-size:12px;color:#dc2626;display:none;">Deskripsi minimal 20 karakter.</p>
+            <span id="descCount" style="font-size:12px;color:var(--muted-foreground);margin-left:auto;">0 / 500</span>
+          </div>
+        </div>
+
+        <!-- Tombol submit -->
+        <div style="display:flex;justify-content:flex-end;gap:10px;">
+          <a href="<%= isResolved ? '/progres' : '/penugasan' %>"
+             style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:6px;font-size:14px;font-weight:500;border:1px solid var(--border);text-decoration:none;color:var(--foreground);background:var(--background);">
+            Kembali
+          </a>
+          <button type="submit" id="submitBtn" class="btn"
+                  style="display:inline-flex;align-items:center;gap:6px;padding:8px 20px;font-size:14px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+            Kirim Update Progres
+          </button>
+        </div>
+      </form>
+    </div>
+    <% } else { %>
+    <!-- Status Menunggu Verifikasi (Progres lock) -->
+    <div class="card" style="padding:24px; text-align:center; color:var(--muted-foreground);">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin:0 auto 12px;display:block;color:var(--muted-foreground);">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="6" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
       </svg>
-      Kirim Update Progres
-    </h2>
-    <p style="font-size:13px;color:var(--muted-foreground);margin-bottom:20px;">
-      Upload foto bukti perbaikan beserta deskripsi pekerjaan yang sudah dilakukan.
-    </p>
-
-    <form method="POST" action="/penugasan/<%= _l.id %>/progres"
-          enctype="multipart/form-data" id="progresForm">
-
-      <!-- Foto (wajib) -->
-      <div style="margin-bottom:20px;">
-        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">
-          Foto Bukti Perbaikan <span style="color:#dc2626;">*</span>
-        </label>
-
-        <!-- Preview -->
-        <div id="previewWrap" style="display:none;margin-bottom:10px;position:relative;display:inline-block;">
-          <img id="previewImg" src="" alt="Preview"
-               style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--border);object-fit:cover;display:block;"/>
-          <button type="button" id="removePhoto"
-                  style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.55);border:none;cursor:pointer;
-                         border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;
-                         color:white;font-size:14px;line-height:1;">×</button>
-        </div>
-
-        <label for="foto" id="fotoLabel"
-               style="display:flex;align-items:center;justify-content:center;gap:8px;
-                      padding:18px;border-radius:8px;border:2px dashed var(--border);
-                      background:var(--muted);cursor:pointer;font-size:13.5px;color:var(--muted-foreground);
-                      transition:border-color .15s;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="18" height="18" rx="2"/>
-            <circle cx="8.5" cy="8.5" r="1.5"/>
-            <polyline points="21 15 16 10 5 21"/>
-          </svg>
-          <span id="fotoLblTxt">Klik untuk pilih foto (JPG/PNG, maks 5MB)</span>
-        </label>
-        <input type="file" id="foto" name="foto" accept="image/jpeg,image/png" style="display:none;"/>
-        <p id="errFoto" style="font-size:12px;color:#dc2626;margin-top:4px;display:none;"></p>
-      </div>
-
-      <!-- Deskripsi (wajib) -->
-      <div style="margin-bottom:24px;">
-        <label for="description" style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">
-          Deskripsi Pekerjaan <span style="color:#dc2626;">*</span>
-          <span style="font-weight:400;color:var(--muted-foreground);">(min. 20 karakter)</span>
-        </label>
-        <textarea id="description" name="description" rows="4"
-                  placeholder="Jelaskan pekerjaan perbaikan yang sudah dilakukan secara detail..."
-                  style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);
-                         background:var(--background);color:var(--foreground);font-size:14px;
-                         resize:vertical;outline:none;font-family:inherit;box-sizing:border-box;"></textarea>
-        <div style="display:flex;justify-content:space-between;margin-top:4px;">
-          <p id="errDesc" style="font-size:12px;color:#dc2626;display:none;">Deskripsi minimal 20 karakter.</p>
-          <span id="descCount" style="font-size:12px;color:var(--muted-foreground);margin-left:auto;">0 / 500</span>
-        </div>
-      </div>
-
-      <!-- Tombol submit -->
-      <div style="display:flex;justify-content:flex-end;gap:10px;">
-        <a href="/penugasan"
-           style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:6px;font-size:14px;font-weight:500;border:1px solid var(--border);text-decoration:none;color:var(--foreground);background:var(--background);">
-          Kembali
-        </a>
-        <button type="submit" id="submitBtn" class="btn"
-                style="display:inline-flex;align-items:center;gap:6px;padding:8px 20px;font-size:14px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-          </svg>
-          Kirim Update Progres
-        </button>
-      </div>
-    </form>
-  </div>
+      <p style="font-size:14px;font-weight:600;margin-bottom:4px;color:var(--foreground);">Progres Perbaikan Terkirim</p>
+      <p style="font-size:13px;margin:0;">Menunggu verifikasi atau permintaan revisi dari Penanggung Jawab ruangan.</p>
+    </div>
+    <% } %>
   <% } else { %>
   <!-- Penugasan sudah selesai -->
   <div style="text-align:center;padding:20px;color:var(--muted-foreground);">

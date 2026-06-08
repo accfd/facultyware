@@ -181,6 +181,7 @@ async function seedUsers() {
     { name: 'Admin Pengguna', email: 'pengguna@fti.ac.id' },
     { name: 'Dewi Rahayu',    email: 'penanggung@fti.ac.id' },
     { name: 'Budi Santoso',   email: 'pengelola@fti.ac.id' },
+    { name: 'Fitri Handayani', email: 'penanggung2@fti.ac.id' },
   ];
   for (const user of users) {
     const [rows] = await db.query('SELECT id FROM users WHERE email = ?', [user.email]);
@@ -217,12 +218,7 @@ async function seedEmployees() {
   const [[userBudi]]  = await db.query("SELECT id FROM users WHERE email = 'pengelola@fti.ac.id'");
   const [[userDewi]]  = await db.query("SELECT id FROM users WHERE email = 'penanggung@fti.ac.id'");
   const [[userReza]]  = await db.query("SELECT id FROM users WHERE email = 'pengguna@fti.ac.id'");
-  // Catatan mapping:
-  //   pengelola@fti.ac.id → Budi Santoso (EMP001) → pengelola_aset
-  //   penanggung@fti.ac.id → Dewi Rahayu (EMP002) → penanggung_jawab
-  //   pengguna@fti.ac.id  → Reza/mahasiswa, tapi employees harus ada jika jadi reported_by
-  // Namun karena pengguna adalah mahasiswa, reported_by pakai employee yang bisa juga mahasiswa
-  // Kita buat 3 employee dari 3 user yang ada (id harus sama)
+  const [[userFitri]] = await db.query("SELECT id FROM users WHERE email = 'penanggung2@fti.ac.id'");
 
   const employees = [
     {
@@ -263,6 +259,19 @@ async function seedEmployees() {
       organization_unit_id: unitSarana.id,
       hire_date: '2015-03-01',
       employment_status_id: statTK.id,
+    },
+    {
+      userId: userFitri?.id,
+      employee_number: 'EMP004',
+      name: 'Fitri Handayani',
+      birth_place: 'Payakumbuh',
+      birth_date: '1983-11-20',
+      gender: 'female',
+      marital_status: 'married',
+      address: 'Jl. Limau Manis No. 9',
+      organization_unit_id: unitSI.id,
+      hire_date: '2012-01-01',
+      employment_status_id: statDosen.id,
     },
   ];
 
@@ -329,6 +338,7 @@ async function seedRooms() {
 
   const [[emp001]] = await db.query("SELECT id FROM employees WHERE employee_number = 'EMP001'");
   const [[emp002]] = await db.query("SELECT id FROM employees WHERE employee_number = 'EMP002'");
+  const [[emp004]] = await db.query("SELECT id FROM employees WHERE employee_number = 'EMP004'");
   const [[gdA]]    = await db.query("SELECT id FROM buildings WHERE code = 'GDA'");
   const [[gdB]]    = await db.query("SELECT id FROM buildings WHERE code = 'GDB'");
   const [[astRS1]] = await db.query("SELECT id FROM assets WHERE code = 'AST-RS1'");
@@ -342,7 +352,7 @@ async function seedRooms() {
 
   const rooms = [
     { asset_id: astRS1?.id, building_id: gdA.id, name: 'Ruang Sidang 1',       code: 'RS1',   floor: '2', capacity: 30, is_public: 1, responsible_employee_id: emp002.id, employee_id: emp001.id },
-    { asset_id: astLAB?.id, building_id: gdA.id, name: 'Laboratorium Komputer', code: 'LAB01', floor: '1', capacity: 40, is_public: 1, responsible_employee_id: emp002.id, employee_id: emp001.id },
+    { asset_id: astLAB?.id, building_id: gdA.id, name: 'Laboratorium Komputer', code: 'LAB01', floor: '1', capacity: 40, is_public: 1, responsible_employee_id: emp004 ? emp004.id : emp002.id, employee_id: emp001.id },
     { asset_id: astRD?.id,  building_id: gdB.id, name: 'Ruang Dosen',           code: 'RD01',  floor: '3', capacity: 20, is_public: 0, responsible_employee_id: emp002.id, employee_id: emp001.id },
   ];
 
@@ -359,6 +369,11 @@ async function seedRooms() {
       );
       ok(`Room "${room.name}" (${room.code}) dibuat`);
     } else {
+      // Update responsible_employee_id jika sudah ada (untuk keperluan re-seed)
+      await db.query(
+        'UPDATE rooms SET responsible_employee_id = ? WHERE code = ?',
+        [room.responsible_employee_id, room.code]
+      );
       skip(`Room "${room.name}" (${room.code})`);
     }
   }
@@ -390,9 +405,10 @@ async function seedStudents() {
 async function seedModelHasRoles() {
   log('Seeding model_has_roles...');
   const assignments = [
-    { email: 'pengguna@fti.ac.id',   roleName: 'pengguna' },
-    { email: 'penanggung@fti.ac.id', roleName: 'penanggung_jawab' },
-    { email: 'pengelola@fti.ac.id',  roleName: 'pengelola_aset' },
+    { email: 'pengguna@fti.ac.id',    roleName: 'pengguna' },
+    { email: 'penanggung@fti.ac.id',  roleName: 'penanggung_jawab' },
+    { email: 'pengelola@fti.ac.id',   roleName: 'pengelola_aset' },
+    { email: 'penanggung2@fti.ac.id', roleName: 'penanggung_jawab' },
   ];
   for (const a of assignments) {
     const [[user]] = await db.query('SELECT id FROM users WHERE email = ?', [a.email]);
@@ -449,6 +465,7 @@ async function main() {
     console.log('  ├──────────────────────────┼─────────────┼───────────────────┤');
     console.log('  │ pengguna@fti.ac.id        │ password123 │ pengguna          │');
     console.log('  │ penanggung@fti.ac.id      │ password123 │ penanggung_jawab  │');
+    console.log('  │ penanggung2@fti.ac.id     │ password123 │ penanggung_jawab  │');
     console.log('  │ pengelola@fti.ac.id       │ password123 │ pengelola_aset    │');
     console.log('  └──────────────────────────┴─────────────┴───────────────────┘');
     console.log('');

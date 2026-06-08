@@ -34,9 +34,28 @@
 }) %>
 
 <!-- Page heading -->
-<div style="margin-bottom:24px;">
-  <h1 style="font-size:20px;font-weight:700;margin-bottom:4px;">Dashboard</h1>
-  <p style="font-size:13px;color:var(--muted-foreground);">Ringkasan laporan maintenance ruangan FTI Unand</p>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+  <div>
+    <h1 style="font-size:20px;font-weight:700;margin-bottom:4px;">Dashboard</h1>
+    <p style="font-size:13px;color:var(--muted-foreground);">
+      <% if (typeof currentFilter !== 'undefined' && currentFilter === 'my') { %>
+        Ringkasan laporan ruangan tanggung jawab saya
+      <% } else { %>
+        Ringkasan seluruh laporan maintenance FTI Unand
+      <% } %>
+    </p>
+  </div>
+  <% if (typeof userRole !== 'undefined' && userRole === 'penanggung_jawab') { %>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <label for="filter-select" style="font-size:13px;font-weight:600;color:var(--muted-foreground);">Filter Statistik:</label>
+    <select id="filter-select" 
+            style="padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--background);color:var(--foreground);font-size:13px;outline:none;cursor:pointer;font-weight:500;"
+            onchange="window.location.href='/dashboard?filter=' + this.value">
+      <option value="all" <%= (typeof currentFilter !== 'undefined' && currentFilter === 'all') ? 'selected' : '' %>>Seluruh Ruangan</option>
+      <option value="my" <%= (typeof currentFilter !== 'undefined' && currentFilter === 'my') ? 'selected' : '' %>>Hanya Ruangan Saya</option>
+    </select>
+  </div>
+  <% } %>
 </div>
 
 <!-- Stat cards -->
