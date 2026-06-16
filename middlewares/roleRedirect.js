@@ -6,7 +6,7 @@ const roleRedirect = (req, res) => {
 
   const destinations = {
     pengguna:         '/laporan',
-    penanggung_jawab: '/dashboard',
+    penanggung_jawab: '/pj/dashboard',
     pengelola_aset:   '/penugasan',
   };
 

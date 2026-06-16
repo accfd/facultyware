@@ -2,10 +2,18 @@ const db = require('../lib/db');
 
 const PAGE_SIZE = 10;
 
-// ── Helper: ambil employee_id dari userId session ──────────────────────────────
+// ── Helper: ambil reporter id dari userId session ─────────────────────────────
+// Mendukung dua jenis pengguna: employees (dosen/staf) dan students (mahasiswa).
+// Keduanya memakai users.id sebagai primary key di tabel masing-masing,
+// sehingga userId session langsung dipakai sebagai reported_by.
 async function getEmployeeId(userId) {
+  // Cek tabel employees terlebih dahulu (dosen, staf, penanggung jawab)
   const [[emp]] = await db.query('SELECT id FROM employees WHERE id = ?', [userId]);
-  return emp ? emp.id : null;
+  if (emp) return emp.id;
+
+  // Jika tidak ada di employees, cek tabel students (mahasiswa)
+  const [[stu]] = await db.query('SELECT id FROM students WHERE id = ?', [userId]);
+  return stu ? stu.id : null;
 }
 
 // ── Helper: format status badge info ──────────────────────────────────────────
@@ -121,6 +129,12 @@ const store = async (req, res, next) => {
     errors.push({ field: 'issue_description', msg: 'Deskripsi kerusakan minimal 20 karakter.' });
   if (issue_description && issue_description.trim().length > 1000)
     errors.push({ field: 'issue_description', msg: 'Deskripsi kerusakan maksimal 1000 karakter.' });
+  
+  if (req.multerError) {
+    errors.push({ field: 'foto', msg: req.multerError });
+  } else if (!foto) {
+    errors.push({ field: 'foto', msg: 'Foto kerusakan wajib diunggah.' });
+  }
 
   if (errors.length > 0) {
     const [rooms] = await db.query(
@@ -199,11 +213,11 @@ const show = async (req, res, next) => {
       `SELECT rmr.id, rmr.issue_description, rmr.status, rmr.reported_at, rmr.resolved_at,
               r.name AS room_name, r.code AS room_code,
               b.name AS building_name,
-              e.name AS reported_by_name
+              u.name AS reported_by_name
        FROM room_maintenance_requests rmr
        JOIN rooms     r ON rmr.room_id     = r.id
        JOIN buildings b ON r.building_id   = b.id
-       JOIN employees e ON rmr.reported_by = e.id
+       JOIN users     u ON rmr.reported_by = u.id
        WHERE rmr.id = ? AND rmr.reported_by = ?`,
       [id, employeeId]
     );

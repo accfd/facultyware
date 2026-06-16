@@ -4,9 +4,19 @@
     const initialMobileOpen = sidebarComponent.dataset.initialMobileOpen === 'true';
     const breakpoint = parseInt(sidebarComponent.dataset.breakpoint) || 768;
     
-    let open = breakpoint > 0 
-      ? (window.innerWidth >= breakpoint ? initialOpen : initialMobileOpen)
-      : initialOpen;
+    let savedOpen = null;
+    try {
+      savedOpen = localStorage.getItem('sidebarOpen');
+    } catch (e) {}
+
+    let open;
+    if (savedOpen !== null && window.innerWidth >= breakpoint) {
+      open = savedOpen === 'true';
+    } else {
+      open = breakpoint > 0 
+        ? (window.innerWidth >= breakpoint ? initialOpen : initialMobileOpen)
+        : initialOpen;
+    }
     
     const updateState = () => {
       sidebarComponent.setAttribute('aria-hidden', !open);
@@ -20,6 +30,9 @@
     const setState = (state) => {
       open = state;
       updateState();
+      try {
+        localStorage.setItem('sidebarOpen', state);
+      } catch (e) {}
     };
 
     const sidebarId = sidebarComponent.id;

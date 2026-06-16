@@ -3,7 +3,8 @@
   currentPath: '/laporan/buat',
   userRole:    typeof userRole !== 'undefined' ? userRole : '',
   userName:    typeof userName !== 'undefined' ? userName : '',
-  flash:       typeof flash !== 'undefined' ? flash : null
+  flash:       typeof flash !== 'undefined' ? flash : null,
+  maxWidth:    '100%'
 }) %>
 
 <%
@@ -18,6 +19,16 @@
     _grouped[r.building_name].push(r);
   });
 
+  const _buildings = [...new Set(_rooms.map(r => r.building_name))].filter(Boolean).sort();
+
+  let selectedBuilding = '';
+  if (_old.room_id) {
+    const selectedRoom = _rooms.find(r => String(r.id) === String(_old.room_id));
+    if (selectedRoom) {
+      selectedBuilding = selectedRoom.building_name;
+    }
+  }
+
   function fieldError(field) {
     return _errors.find(function(e) { return e.field === field; });
   }
@@ -30,7 +41,7 @@
   <span style="color:var(--foreground);">Buat Laporan</span>
 </div>
 
-<div style="max-width:850px; width:100%; margin: 0 auto;">
+<div style="max-width:100%; width:100%; margin: 0 auto;">
   <div style="margin-bottom:24px;">
     <h1 style="font-size:20px;font-weight:700;margin-bottom:4px;">Buat Laporan Kerusakan</h1>
     <p style="font-size:13px;color:var(--muted-foreground);">Isi form di bawah untuk melaporkan kerusakan ruangan.</p>
@@ -50,23 +61,38 @@
   <div class="card" style="padding:24px;">
     <form action="/laporan" method="POST" enctype="multipart/form-data" id="laporanForm">
 
+      <!-- Gedung -->
+      <div style="margin-bottom:20px;">
+        <label for="building_select" style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">
+          Gedung <span style="color:#dc2626;">*</span>
+        </label>
+        <select id="building_select" name="building"
+                style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--background);color:var(--foreground);font-size:14px;outline:none;cursor:pointer;">
+          <option value="">-- Pilih Gedung --</option>
+          <% _buildings.forEach(function(bName) { %>
+            <option value="<%= bName %>" <%= selectedBuilding === bName ? 'selected' : '' %>><%= bName %></option>
+          <% }); %>
+        </select>
+        <p id="err-building" style="font-size:12px;color:#dc2626;margin-top:4px;display:none;"></p>
+      </div>
+
       <!-- Ruangan -->
       <div style="margin-bottom:20px;">
         <label for="room_id" style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">
           Ruangan <span style="color:#dc2626;">*</span>
         </label>
-        <select id="room_id" name="room_id"
+        <select id="room_id" name="room_id" <%= !selectedBuilding ? 'disabled' : '' %>
                 style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid <%- fieldError('room_id') ? '#fca5a5' : 'var(--border)' %>;background:var(--background);color:var(--foreground);font-size:14px;outline:none;cursor:pointer;">
-          <option value="">-- Pilih Ruangan --</option>
-          <% Object.keys(_grouped).forEach(function(bName) { %>
-          <optgroup label="<%= bName %>">
-            <% _grouped[bName].forEach(function(r) { %>
-            <option value="<%= r.id %>" <%= (_old.room_id && String(_old.room_id) === String(r.id)) ? 'selected' : '' %>>
-              <%= r.name %> (<%= r.code %>)
-            </option>
+          <% if (!selectedBuilding) { %>
+            <option value="">-- Pilih Gedung Terlebih Dahulu --</option>
+          <% } else { %>
+            <option value="">-- Pilih Ruangan --</option>
+            <% (_grouped[selectedBuilding] || []).forEach(function(r) { %>
+              <option value="<%= r.id %>" <%= String(_old.room_id) === String(r.id) ? 'selected' : '' %>>
+                <%= r.name %> (<%= r.code %>)
+              </option>
             <% }); %>
-          </optgroup>
-          <% }); %>
+          <% } %>
         </select>
         <% if (fieldError('room_id')) { %>
         <p id="err-room_id" style="font-size:12px;color:#dc2626;margin-top:4px;"><%= fieldError('room_id').msg %></p>
@@ -97,7 +123,7 @@
       <!-- Foto -->
       <div style="margin-bottom:24px;">
         <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">
-          Foto Kerusakan <span style="font-weight:400;color:var(--muted-foreground);">(opsional)</span>
+          Foto Kerusakan <span style="color:#dc2626;">*</span>
         </label>
 
         <!-- Preview area -->
@@ -109,13 +135,17 @@
         </div>
 
         <label for="foto"
-               style="display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;border-radius:8px;border:2px dashed var(--border);background:var(--muted);cursor:pointer;font-size:13.5px;color:var(--muted-foreground);transition:border-color .15s;"
+               style="display:flex;align-items:center;justify-content:center;gap:8px;padding:14px;border-radius:8px;border:2px dashed <%- fieldError('foto') ? '#fca5a5' : 'var(--border)' %>;background:var(--muted);cursor:pointer;font-size:13.5px;color:var(--muted-foreground);transition:border-color .15s;"
                id="fotoLabel">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
           <span id="fotoLabelText">Klik untuk pilih foto (JPG/PNG, maks 5MB)</span>
         </label>
         <input type="file" id="foto" name="foto" accept="image/jpeg,image/png" style="display:none;"/>
+        <% if (fieldError('foto')) { %>
+        <p id="err-foto" style="font-size:12px;color:#dc2626;margin-top:4px;"><%= fieldError('foto').msg %></p>
+        <% } else { %>
         <p id="err-foto" style="font-size:12px;color:#dc2626;margin-top:4px;display:none;"></p>
+        <% } %>
       </div>
 
       <!-- Actions -->
@@ -167,6 +197,7 @@ fotoInput.addEventListener('change', function() {
     return;
   }
   errFoto.style.display = 'none';
+  fotoLabel.style.borderColor = 'var(--border)';
 
   const reader = new FileReader();
   reader.onload = function(e) {
@@ -186,15 +217,71 @@ removeBtn.addEventListener('click', function() {
   previewImg.src = '';
 });
 
+// ── Dropdown Gedung & Ruangan Bertingkat ─────────────────────────────────────
+const allRooms = <%- JSON.stringify(_rooms) %>;
+const buildingSelect = document.getElementById('building_select');
+const roomSel   = document.getElementById('room_id');
+const errBuilding = document.getElementById('err-building');
+const errRoom   = document.getElementById('err-room_id');
+
+buildingSelect.addEventListener('change', function() {
+  const selectedB = this.value;
+  roomSel.innerHTML = '';
+  
+  if (selectedB) {
+    errBuilding.style.display = 'none';
+    buildingSelect.style.borderColor = 'var(--border)';
+  }
+
+  if (!selectedB) {
+    roomSel.disabled = true;
+    const opt = document.createElement('option');
+    opt.value = '';
+    opt.textContent = '-- Pilih Gedung Terlebih Dahulu --';
+    roomSel.appendChild(opt);
+    return;
+  }
+
+  roomSel.disabled = false;
+  const placeholderOpt = document.createElement('option');
+  placeholderOpt.value = '';
+  placeholderOpt.textContent = '-- Pilih Ruangan --';
+  roomSel.appendChild(placeholderOpt);
+
+  const filtered = allRooms.filter(r => r.building_name === selectedB);
+  filtered.forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r.id;
+    opt.textContent = r.name + ' (' + r.code + ')';
+    roomSel.appendChild(opt);
+  });
+});
+
+roomSel.addEventListener('change', function() {
+  if (this.value) {
+    errRoom.style.display = 'none';
+    roomSel.style.borderColor = 'var(--border)';
+  }
+});
+
 // ── Validasi client-side saat submit ─────────────────────────────────────────
 const form      = document.getElementById('laporanForm');
 const submitBtn = document.getElementById('submitBtn');
-const errRoom   = document.getElementById('err-room_id');
 const errDesc   = document.getElementById('err-issue_description');
-const roomSel   = document.getElementById('room_id');
 
 form.addEventListener('submit', function(e) {
   let valid = true;
+
+  // Gedung
+  if (!buildingSelect.value) {
+    errBuilding.textContent = 'Gedung wajib dipilih.';
+    errBuilding.style.display = 'block';
+    buildingSelect.style.borderColor = '#fca5a5';
+    valid = false;
+  } else {
+    errBuilding.style.display = 'none';
+    buildingSelect.style.borderColor = 'var(--border)';
+  }
 
   // Ruangan
   if (!roomSel.value) {
@@ -219,10 +306,23 @@ form.addEventListener('submit', function(e) {
     descEl.style.borderColor = 'var(--border)';
   }
 
+  // Foto
+  if (!fotoInput.value) {
+    errFoto.textContent = 'Foto kerusakan wajib diunggah.';
+    errFoto.style.display = 'block';
+    fotoLabel.style.borderColor = '#fca5a5';
+    valid = false;
+  } else {
+    errFoto.style.display = 'none';
+    fotoLabel.style.borderColor = 'var(--border)';
+  }
+
   if (!valid) {
     e.preventDefault();
-    document.querySelector('[style*="borderColor: #fca5a5"]') &&
-      document.querySelector('[style*="borderColor: #fca5a5"]').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const firstErr = document.querySelector('[style*="borderColor: #fca5a5"]') || document.querySelector('[style*="border-color: #fca5a5"]');
+    if (firstErr) {
+      firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
     return;
   }
 

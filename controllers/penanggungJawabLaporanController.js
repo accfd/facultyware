@@ -39,21 +39,21 @@ const index = async (req, res, next) => {
        FROM room_maintenance_requests rmr
        JOIN rooms r ON rmr.room_id = r.id
        JOIN buildings b ON r.building_id = b.id
-       JOIN employees e ON rmr.reported_by = e.id
+       JOIN users u ON rmr.reported_by = u.id
        ${where}`,
       params
     );
 
     const [laporan] = await db.query(
       `SELECT rmr.id, r.name AS room_name, b.name AS building_name,
-              e.name AS reported_by_name, rmr.issue_description,
+              u.name AS reported_by_name, rmr.issue_description,
               rmr.status, rmr.reported_at
        FROM room_maintenance_requests rmr
        JOIN rooms r ON rmr.room_id = r.id
        JOIN buildings b ON r.building_id = b.id
-       JOIN employees e ON rmr.reported_by = e.id
+       JOIN users u ON rmr.reported_by = u.id
        ${where}
-       ORDER BY rmr.reported_at DESC
+       ORDER BY (rmr.status = 'reported') DESC, rmr.reported_at DESC
        LIMIT ? OFFSET ?`,
       [...params, PAGE_SIZE, offset]
     );
@@ -92,11 +92,11 @@ const show = async (req, res, next) => {
       `SELECT rmr.id, rmr.issue_description, rmr.status, rmr.reported_at, rmr.resolved_at,
               r.name AS room_name, r.code AS room_code, r.id AS room_id,
               b.name AS building_name,
-              e.name AS reported_by_name, e.employee_number
+              u.name AS reported_by_name, u.email AS employee_number
        FROM room_maintenance_requests rmr
        JOIN rooms r ON rmr.room_id = r.id
        JOIN buildings b ON r.building_id = b.id
-       JOIN employees e ON rmr.reported_by = e.id
+       JOIN users u ON rmr.reported_by = u.id
        WHERE rmr.id = ? AND r.responsible_employee_id = ?`,
       [id, pjEmployeeId]
     );

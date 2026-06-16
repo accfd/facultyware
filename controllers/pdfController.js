@@ -10,7 +10,9 @@ if (!fs.existsSync(generatedDir)) fs.mkdirSync(generatedDir, { recursive: true }
 // ── Helpers ────────────────────────────────────────────────────────────────────
 async function getEmployeeId(userId) {
   const [[emp]] = await db.query('SELECT id FROM employees WHERE id = ?', [userId]);
-  return emp ? emp.id : null;
+  if (emp) return emp.id;
+  const [[stu]] = await db.query('SELECT id FROM students WHERE id = ?', [userId]);
+  return stu ? stu.id : null;
 }
 
 function fmtDate(d) {
@@ -103,10 +105,12 @@ function drawHeader(doc, subtitle) {
 
 /** Gambar satu baris label: nilai (Cambria, Size 12) */
 function drawField(doc, label, value, xLabel, xValue, y, opts = {}) {
-  const labelW  = opts.labelW  || 170;
-  const valueW  = opts.valueW  || 345;
+  const labelW  = opts.labelW  || (xValue - xLabel - 15);
+  const valueW  = opts.valueW  || (555 - xValue);
   doc.fontSize(12).font('Cambria-Bold')
-     .text(label + ':', xLabel, y, { width: labelW, lineBreak: false });
+     .text(label, xLabel, y, { width: labelW, lineBreak: false });
+  doc.fontSize(12).font('Cambria-Bold')
+     .text(':', xValue - 10, y);
   doc.fontSize(12).font('Cambria')
      .text(String(value || '-'), xValue, y, { width: valueW });
 }
@@ -228,11 +232,11 @@ const buktiLaporan = async (req, res, next) => {
     const [[laporan]] = await db.query(
       `SELECT rmr.*, r.name AS room_name, r.code AS room_code,
               b.name AS building_name, b.code AS building_code,
-              e.name AS reported_by_name, e.employee_number
+              u.name AS reported_by_name, u.email AS employee_number
        FROM room_maintenance_requests rmr
        JOIN rooms r ON rmr.room_id = r.id
        JOIN buildings b ON r.building_id = b.id
-       JOIN employees e ON rmr.reported_by = e.id
+       JOIN users u ON rmr.reported_by = u.id
        WHERE rmr.id = ? AND rmr.reported_by = ?`,
       [id, employeeId]
     );
@@ -282,7 +286,7 @@ const buktiLaporan = async (req, res, next) => {
 
     const fields = [
       ['Nama Pelapor',    laporan.reported_by_name],
-      ['NIP / NIM',       laporan.employee_number || '-'],
+      ['Email',           laporan.employee_number || '-'],
       ['Ruangan',         `${laporan.room_name} (${laporan.room_code})`],
       ['Gedung',          `${laporan.building_name} (${laporan.building_code})`],
       ['Tanggal Laporan', fmtDateTime(laporan.reported_at)],
@@ -347,17 +351,28 @@ const rekapBulanan = async (req, res, next) => {
       });
     }
 
+    const employeeId = await getEmployeeId(req.session.userId);
+
+    const [[pjInfo]] = await db.query(
+      `SELECT e.name, e.employee_number, ou.name AS org_unit_name
+       FROM employees e
+       LEFT JOIN organization_units ou ON e.organization_unit_id = ou.id
+       WHERE e.id = ?`,
+      [employeeId]
+    );
+
     const [laporan] = await db.query(
       `SELECT rmr.id, r.name AS room_name, b.name AS building_name,
-              e.name AS reported_by, rmr.issue_description,
+              u.name AS reported_by, rmr.issue_description,
               rmr.status, rmr.reported_at, rmr.resolved_at
        FROM room_maintenance_requests rmr
        JOIN rooms r ON rmr.room_id = r.id
        JOIN buildings b ON r.building_id = b.id
-       JOIN employees e ON rmr.reported_by = e.id
+       JOIN users u ON rmr.reported_by = u.id
        WHERE DATE_FORMAT(rmr.reported_at, '%Y-%m') = ?
+         AND r.responsible_employee_id = ?
        ORDER BY rmr.reported_at ASC`,
-      [bulan]
+      [bulan, employeeId]
     );
 
     // Summary
@@ -379,6 +394,23 @@ const rekapBulanan = async (req, res, next) => {
     doc.pipe(res);
 
     drawHeader(doc, `Rekap Laporan Maintenance Ruangan\nBULAN ${namaBulan}`);
+
+    // Data Penanggung Jawab
+    if (pjInfo) {
+      doc.fontSize(12).font('Cambria-Bold').text('Penanggung Jawab', 40);
+      doc.moveTo(40, doc.y + 1).lineTo(555, doc.y + 1).lineWidth(0.5).stroke('#CCCCCC');
+      doc.moveDown(0.3);
+
+      const y1 = doc.y;
+      drawField(doc, 'Nama', pjInfo.name, 40, 160, y1);
+      doc.moveDown(0.35);
+      const y2 = doc.y;
+      drawField(doc, 'NIP', pjInfo.employee_number || '-', 40, 160, y2);
+      doc.moveDown(0.35);
+      const y3 = doc.y;
+      drawField(doc, 'Departemen / Unit', pjInfo.org_unit_name || '-', 40, 160, y3);
+      doc.moveDown(0.6);
+    }
 
     // Ringkasan statistik
     doc.fontSize(12).font('Cambria-Bold').text('Ringkasan Statistik', 40);
@@ -500,13 +532,13 @@ const permohonanMaintenance = async (req, res, next) => {
       `SELECT rmr.id, rmr.issue_description, rmr.status, rmr.reported_at,
               r.name AS room_name, r.code AS room_code,
               b.name AS building_name, b.code AS building_code,
-              e_by.name AS reported_by_name, e_by.employee_number AS reported_by_number,
+              u_by.name AS reported_by_name, u_by.email AS reported_by_number,
               e_pj.name AS penanggung_jawab_name,
               e_pg.name AS pengelola_name
        FROM room_maintenance_requests rmr
        JOIN rooms r ON rmr.room_id = r.id
        JOIN buildings b ON r.building_id = b.id
-       JOIN employees e_by ON rmr.reported_by = e_by.id
+       JOIN users u_by ON rmr.reported_by = u_by.id
        JOIN employees e_pj ON r.responsible_employee_id = e_pj.id
        LEFT JOIN employees e_pg ON rmr.employee_id = e_pg.id
        WHERE rmr.id = ?`,
@@ -612,13 +644,13 @@ const hasilPerbaikan = async (req, res, next) => {
       `SELECT rmr.id, rmr.issue_description, rmr.status, rmr.reported_at, rmr.resolved_at,
               r.name AS room_name, r.code AS room_code,
               b.name AS building_name,
-              e_by.name AS reported_by_name,
+              u_by.name AS reported_by_name,
               e_pj.name AS penanggung_jawab_name,
               e_pg.name AS pengelola_name
        FROM room_maintenance_requests rmr
        JOIN rooms r ON rmr.room_id = r.id
        JOIN buildings b ON r.building_id = b.id
-       JOIN employees e_by ON rmr.reported_by = e_by.id
+       JOIN users u_by ON rmr.reported_by = u_by.id
        JOIN employees e_pj ON r.responsible_employee_id = e_pj.id
        LEFT JOIN employees e_pg ON rmr.employee_id = e_pg.id
        WHERE rmr.id = ?`,
@@ -761,11 +793,11 @@ const buktiLaporanPJ = async (req, res, next) => {
     const [[laporan]] = await db.query(
       `SELECT rmr.*, r.name AS room_name, r.code AS room_code,
               b.name AS building_name, b.code AS building_code,
-              e.name AS reported_by_name, e.employee_number
+              u.name AS reported_by_name, u.email AS employee_number
        FROM room_maintenance_requests rmr
        JOIN rooms r ON rmr.room_id = r.id
        JOIN buildings b ON r.building_id = b.id
-       JOIN employees e ON rmr.reported_by = e.id
+       JOIN users u ON rmr.reported_by = u.id
        WHERE rmr.id = ?`,
       [id]
     );

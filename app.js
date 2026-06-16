@@ -67,10 +67,10 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/',            indexRouter);
-app.use('/dashboard',   dashboardRouter);
+app.use('/pj/dashboard',   dashboardRouter);
 app.use('/laporan',     laporanRouter);
 app.use('/pj/laporan',  pjLaporanRouter);
-app.use('/maintenance', maintenanceRouter);
+app.use('/pj/maintenance', maintenanceRouter);
 app.use('/penugasan',   pengelolaRouter);
 app.use('/progres',     progresRouter);
 app.use('/api/v1',      apiRouter);

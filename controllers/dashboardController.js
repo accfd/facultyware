@@ -13,13 +13,13 @@ const index = async (req, res, next) => {
       SELECT
         rmr.id,
         r.name  AS room_name,
-        e.name  AS reported_by_name,
+        u.name  AS reported_by_name,
         rmr.issue_description,
         rmr.status,
         rmr.reported_at
       FROM room_maintenance_requests rmr
       JOIN rooms     r ON rmr.room_id     = r.id
-      JOIN employees e ON rmr.reported_by = e.id
+      JOIN users u ON rmr.reported_by = u.id
       ORDER BY rmr.reported_at DESC
       LIMIT 5
     `;
@@ -50,13 +50,13 @@ const index = async (req, res, next) => {
         SELECT
           rmr.id,
           r.name  AS room_name,
-          e.name  AS reported_by_name,
+          u.name  AS reported_by_name,
           rmr.issue_description,
           rmr.status,
           rmr.reported_at
         FROM room_maintenance_requests rmr
         JOIN rooms     r ON rmr.room_id     = r.id
-        JOIN employees e ON rmr.reported_by = e.id
+        JOIN users u ON rmr.reported_by = u.id
         WHERE r.responsible_employee_id = ?
         ORDER BY rmr.reported_at DESC
         LIMIT 5

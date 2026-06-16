@@ -3,7 +3,8 @@
   currentPath: '/penugasan',
   userRole:    typeof userRole !== 'undefined' ? userRole : '',
   userName:    typeof userName !== 'undefined' ? userName : '',
-  flash:       typeof flash !== 'undefined' ? flash : null
+  flash:       typeof flash !== 'undefined' ? flash : null,
+  maxWidth:    '100%'
 }) %>
 
 <%
@@ -112,27 +113,27 @@
         <tr style="border-bottom:1px solid var(--border);transition:background .1s;"
             onmouseover="this.style.background='var(--muted)'" onmouseout="this.style.background=''">
           <td style="padding:12px 14px;color:var(--muted-foreground);"><%= no %></td>
-          <td style="padding:12px 14px;font-weight:500;white-space:nowrap;">
+          <td style="padding:12px 14px;font-weight:500;">
             <%= p.room_name %>
             <% if (p.jumlah_progres === 0) { %>
-            <span style="display:inline-flex;align-items:center;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:700;background:#dc2626;color:#fff;margin-left:5px;letter-spacing:.03em;">BARU</span>
+            <span class="badge-new">BARU</span>
             <% } %>
             <% if (p.has_revisi) { %>
-            <span style="display:inline-flex;align-items:center;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:700;background:#d97706;color:#fff;margin-left:5px;letter-spacing:.03em;">REVISI</span>
+            <span class="badge-revisi">REVISI</span>
             <% } %>
           </td>
-          <td style="padding:12px 14px;color:var(--muted-foreground);white-space:nowrap;"><%= p.building_name %></td>
-          <td style="padding:12px 14px;max-width:200px;">
-            <span title="<%= p.issue_description %>"><%= trunc(p.issue_description, 50) %></span>
+          <td style="padding:12px 14px;color:var(--muted-foreground);"><%= p.building_name %></td>
+          <td style="padding:12px 14px;max-width:260px;" class="desc-cell">
+            <div class="short-desc line-clamp-2" style="color:var(--muted-foreground);"><%= p.issue_description %></div>
+            <div class="full-desc" style="display:none;color:var(--foreground);white-space:pre-wrap;word-break:break-word;"><%= p.issue_description %></div>
+            <% if (p.issue_description && p.issue_description.length > 40) { %>
+              <a href="javascript:void(0)" class="toggle-desc link-selengkapnya" style="margin-top:2px;display:none;" onclick="toggleInlineDesc(this, event)">Selengkapnya</a>
+            <% } %>
           </td>
           <td style="padding:12px 14px;color:var(--muted-foreground);white-space:nowrap;"><%= p.penanggung_jawab_name %></td>
           <td style="padding:12px 14px;white-space:nowrap;color:var(--muted-foreground);"><%= fmtDate(p.reported_at) %></td>
           <td style="padding:12px 14px;text-align:center;">
-            <span style="display:inline-flex;align-items:center;justify-content:center;
-                         min-width:32px;height:28px;padding:0 10px;border-radius:20px;
-                         font-size:12px;font-weight:600;
-                         background:<%= p.jumlah_progres > 0 ? '#faf5ff' : 'var(--muted)' %>;
-                         color:<%= p.jumlah_progres > 0 ? '#7e22ce' : 'var(--muted-foreground)' %>;">
+            <span class="progress-count <%= p.jumlah_progres > 0 ? 'active' : '' %>">
               <%= p.jumlah_progres %>×
             </span>
           </td>
@@ -180,5 +181,70 @@
   <% } %>
   <% } %>
 </div>
+
+<script>
+  function toggleInlineDesc(btn, event) {
+    if (event) event.stopPropagation();
+    const cell = btn.closest('.desc-cell');
+    if (!cell) return;
+
+    const shortDesc = cell.querySelector('.short-desc');
+    const fullDesc = cell.querySelector('.full-desc');
+    const isCurrentlyExpanded = fullDesc.style.display === 'block';
+
+    // 1. Collapse all other expanded description cells
+    document.querySelectorAll('.desc-cell').forEach(c => {
+      if (c !== cell) {
+        const sd = c.querySelector('.short-desc');
+        const fd = c.querySelector('.full-desc');
+        const toggleBtn = c.querySelector('.toggle-desc');
+        if (fd && fd.style.display === 'block') {
+          fd.style.display = 'none';
+          if (sd) sd.style.display = '-webkit-box';
+          if (toggleBtn) toggleBtn.textContent = 'Selengkapnya';
+        }
+      }
+    });
+
+    // 2. Toggle the state of the clicked cell
+    if (isCurrentlyExpanded) {
+      fullDesc.style.display = 'none';
+      shortDesc.style.display = '-webkit-box';
+      btn.textContent = 'Selengkapnya';
+    } else {
+      fullDesc.style.display = 'block';
+      shortDesc.style.display = 'none';
+      btn.textContent = 'Sembunyikan';
+    }
+  }
+
+  function adjustToggleLinks() {
+    document.querySelectorAll('.desc-cell').forEach(function(cell) {
+      const shortDesc = cell.querySelector('.short-desc');
+      const toggleLink = cell.querySelector('.toggle-desc');
+      if (shortDesc && toggleLink) {
+        // Use a 3px threshold to avoid false positives from subpixel rendering/rounding
+        if (shortDesc.scrollHeight - shortDesc.clientHeight > 3) {
+          toggleLink.style.display = 'inline-block';
+        } else {
+          toggleLink.style.display = 'none';
+        }
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', adjustToggleLinks);
+  } else {
+    adjustToggleLinks();
+  }
+  window.addEventListener('load', adjustToggleLinks);
+  window.addEventListener('resize', adjustToggleLinks);
+  if (document.fonts) {
+    document.fonts.ready.then(adjustToggleLinks);
+  }
+  document.addEventListener('htmx:afterSettle', adjustToggleLinks);
+  setTimeout(adjustToggleLinks, 100);
+</script>
 
 <%- include('../partials/footer') %>

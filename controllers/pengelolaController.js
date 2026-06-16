@@ -70,7 +70,7 @@ const index = async (req, res, next) => {
        JOIN buildings b ON r.building_id = b.id
        JOIN employees e_pj ON r.responsible_employee_id = e_pj.id
        ${where}
-       ORDER BY rmr.reported_at ASC
+       ORDER BY has_revisi DESC, rmr.reported_at ASC
        LIMIT ? OFFSET ?`,
       [...params, PAGE_SIZE, offset]
     );
@@ -108,12 +108,12 @@ const show = async (req, res, next) => {
       `SELECT rmr.id, rmr.issue_description, rmr.status, rmr.reported_at, rmr.resolved_at,
               r.name AS room_name, r.code AS room_code,
               b.name AS building_name,
-              e_by.name AS reported_by_name,
+              u_by.name AS reported_by_name,
               e_pj.name AS penanggung_jawab_name
        FROM room_maintenance_requests rmr
        JOIN rooms r ON rmr.room_id = r.id
        JOIN buildings b ON r.building_id = b.id
-       JOIN employees e_by ON rmr.reported_by = e_by.id
+       JOIN users u_by ON rmr.reported_by = u_by.id
        JOIN employees e_pj ON r.responsible_employee_id = e_pj.id
        WHERE rmr.id = ? AND rmr.employee_id = ?`,
       [id, employeeId]

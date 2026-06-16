@@ -1,6 +1,7 @@
 <%- include('../../partials/header', {
   title:       'Daftar Laporan',
   currentPath: '/pj/laporan',
+  maxWidth:    '100%',
   userRole:    typeof userRole !== 'undefined' ? userRole : '',
   userName:    typeof userName !== 'undefined' ? userName : '',
   flash:       typeof flash !== 'undefined' ? flash : null
@@ -122,8 +123,8 @@
              value="<%= new Date().toISOString().slice(0,7) %>"
              style="padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--background);color:var(--foreground);font-size:13px;outline:none;cursor:pointer;"
              required/>
-      <button type="submit"
-              style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:6px;font-size:13px;font-weight:500;border:1px solid #bfdbfe;color:#1d4ed8;background:#eff6ff;cursor:pointer;">
+      <button type="submit" class="btn-resp-info"
+              style="padding:6px 14px;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Download Rekap PDF
       </button>
@@ -149,7 +150,7 @@
     <!-- Status filter -->
     <div style="min-width:160px;">
       <label style="display:block;font-size:12px;font-weight:600;color:var(--muted-foreground);margin-bottom:5px;">Status</label>
-      <select name="status" class="input" style="height:36px;font-size:13px;width:100%;box-sizing:border-box;">
+      <select name="status" class="input" style="height:36px;font-size:13px;width:100%;box-sizing:border-box;border:1px solid var(--border);background:var(--background);color:var(--foreground);border-radius:8px;outline:none;padding:0 10px;cursor:pointer;">
         <% statusFilters.forEach(function(sf) { %>
         <option value="<%= sf.val %>" <%= _status === sf.val ? 'selected' : '' %>><%= sf.label %></option>
         <% }); %>
@@ -195,7 +196,6 @@
         <tr style="border-bottom:1px solid var(--border);background:var(--muted);">
           <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);white-space:nowrap;">No</th>
           <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);">Ruangan</th>
-          <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);">Gedung</th>
           <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);">Pelapor</th>
           <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);">Deskripsi</th>
           <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);">Status</th>
@@ -211,16 +211,19 @@
         <tr style="border-bottom:1px solid var(--border);transition:background .1s;"
             onmouseover="this.style.background='var(--muted)'" onmouseout="this.style.background=''">
           <td style="padding:12px 14px;color:var(--muted-foreground);"><%= no %></td>
-          <td style="padding:12px 14px;font-weight:500;white-space:nowrap;">
+          <td style="padding:12px 14px;font-weight:500;width:260px;max-width:260px;word-break:break-word;line-height:1.35;">
             <%= l.room_name %>
             <% if (l.status === 'reported') { %>
-            <span style="display:inline-flex;align-items:center;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:700;background:#dc2626;color:#fff;margin-left:5px;letter-spacing:.03em;">BARU</span>
+            <span style="display:inline-flex;align-items:center;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:700;background:#dc2626;color:#fff;margin-left:5px;letter-spacing:.03em;vertical-align:middle;">BARU</span>
             <% } %>
           </td>
-          <td style="padding:12px 14px;color:var(--muted-foreground);white-space:nowrap;"><%= l.building_name %></td>
           <td style="padding:12px 14px;color:var(--muted-foreground);white-space:nowrap;"><%= l.reported_by_name %></td>
-          <td style="padding:12px 14px;max-width:200px;">
-            <span title="<%= l.issue_description %>"><%= trunc(l.issue_description, 50) %></span>
+          <td style="padding:12px 14px;max-width:260px;" class="desc-cell">
+            <div class="short-desc line-clamp-2" style="color:var(--muted-foreground);"><%= l.issue_description || '-' %></div>
+            <div class="full-desc" style="display:none;color:var(--foreground);white-space:pre-wrap;word-break:break-word;"><%= l.issue_description || '-' %></div>
+            <% if (l.issue_description && l.issue_description.length > 40) { %>
+              <a href="javascript:void(0)" class="toggle-desc link-selengkapnya" style="margin-top:2px;display:none;" onclick="toggleInlineDesc(this, event)">Selengkapnya</a>
+            <% } %>
           </td>
           <td style="padding:12px 14px;white-space:nowrap;">
             <span class="status-badge status-<%= l.status %>">
@@ -242,7 +245,7 @@
               <% } %>
               <!-- Buat Maintenance (hanya jika status=reported) -->
               <% if (l.status === 'reported') { %>
-              <a href="/maintenance/buat?laporan_id=<%= l.id %>" class="action-btn action-btn-maintenance" title="Buat Permohonan Maintenance">
+              <a href="/pj/maintenance/buat?laporan_id=<%= l.id %>" class="action-btn action-btn-maintenance" title="Buat Permohonan Maintenance">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
               </a>
               <% } %>
@@ -295,5 +298,70 @@
   <% } %>
   <% } %>
 </div>
+
+<script>
+  function toggleInlineDesc(btn, event) {
+    if (event) event.stopPropagation();
+    const cell = btn.closest('.desc-cell');
+    if (!cell) return;
+
+    const shortDesc = cell.querySelector('.short-desc');
+    const fullDesc = cell.querySelector('.full-desc');
+    const isCurrentlyExpanded = fullDesc.style.display === 'block';
+
+    // 1. Collapse all other expanded description cells
+    document.querySelectorAll('.desc-cell').forEach(c => {
+      if (c !== cell) {
+        const sd = c.querySelector('.short-desc');
+        const fd = c.querySelector('.full-desc');
+        const toggleBtn = c.querySelector('.toggle-desc');
+        if (fd && fd.style.display === 'block') {
+          fd.style.display = 'none';
+          if (sd) sd.style.display = '-webkit-box';
+          if (toggleBtn) toggleBtn.textContent = 'Selengkapnya';
+        }
+      }
+    });
+
+    // 2. Toggle the state of the clicked cell
+    if (isCurrentlyExpanded) {
+      fullDesc.style.display = 'none';
+      shortDesc.style.display = '-webkit-box';
+      btn.textContent = 'Selengkapnya';
+    } else {
+      fullDesc.style.display = 'block';
+      shortDesc.style.display = 'none';
+      btn.textContent = 'Sembunyikan';
+    }
+  }
+
+  function adjustToggleLinks() {
+    document.querySelectorAll('.desc-cell').forEach(function(cell) {
+      const shortDesc = cell.querySelector('.short-desc');
+      const toggleLink = cell.querySelector('.toggle-desc');
+      if (shortDesc && toggleLink) {
+        // Use a 3px threshold to avoid false positives from subpixel rendering/rounding
+        if (shortDesc.scrollHeight - shortDesc.clientHeight > 3) {
+          toggleLink.style.display = 'inline-block';
+        } else {
+          toggleLink.style.display = 'none';
+        }
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', adjustToggleLinks);
+  } else {
+    adjustToggleLinks();
+  }
+  window.addEventListener('load', adjustToggleLinks);
+  window.addEventListener('resize', adjustToggleLinks);
+  if (document.fonts) {
+    document.fonts.ready.then(adjustToggleLinks);
+  }
+  document.addEventListener('htmx:afterSettle', adjustToggleLinks);
+  setTimeout(adjustToggleLinks, 100);
+</script>
 
 <%- include('../../partials/footer') %>

@@ -27,7 +27,7 @@
 
 <%- include('partials/header', {
   title: 'Dashboard',
-  currentPath: '/dashboard',
+  currentPath: '/pj/dashboard',
   userRole: typeof userRole !== 'undefined' ? userRole : '',
   userName: typeof userName !== 'undefined' ? userName : '',
   flash:    typeof flash !== 'undefined' ? flash : null
@@ -50,7 +50,7 @@
     <label for="filter-select" style="font-size:13px;font-weight:600;color:var(--muted-foreground);">Filter Statistik:</label>
     <select id="filter-select" 
             style="padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--background);color:var(--foreground);font-size:13px;outline:none;cursor:pointer;font-weight:500;"
-            onchange="window.location.href='/dashboard?filter=' + this.value">
+            onchange="window.location.href='/pj/dashboard?filter=' + this.value">
       <option value="all" <%= (typeof currentFilter !== 'undefined' && currentFilter === 'all') ? 'selected' : '' %>>Seluruh Ruangan</option>
       <option value="my" <%= (typeof currentFilter !== 'undefined' && currentFilter === 'my') ? 'selected' : '' %>>Hanya Ruangan Saya</option>
     </select>
@@ -75,33 +75,33 @@
   <div class="card" style="padding:20px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <span style="font-size:12px;font-weight:500;color:var(--muted-foreground);">Baru Dilaporkan</span>
-      <span style="padding:6px;border-radius:8px;background:#fffbeb;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span class="stat-badge-reported" style="padding:6px;border-radius:8px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       </span>
     </div>
-    <div style="font-size:30px;font-weight:700;color:#d97706;"><%= _reported %></div>
+    <div class="stat-text-reported" style="font-size:30px;font-weight:700;"><%= _reported %></div>
     <div style="font-size:12px;color:var(--muted-foreground);margin-top:4px;">Menunggu tindakan</div>
   </div>
 
   <div class="card" style="padding:20px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <span style="font-size:12px;font-weight:500;color:var(--muted-foreground);">Dalam Proses</span>
-      <span style="padding:6px;border-radius:8px;background:#eff6ff;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+      <span class="stat-badge-progress" style="padding:6px;border-radius:8px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
       </span>
     </div>
-    <div style="font-size:30px;font-weight:700;color:#2563eb;"><%= _inProgress %></div>
+    <div class="stat-text-progress" style="font-size:30px;font-weight:700;"><%= _inProgress %></div>
     <div style="font-size:12px;color:var(--muted-foreground);margin-top:4px;">Sedang dikerjakan</div>
   </div>
 
   <div class="card" style="padding:20px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
       <span style="font-size:12px;font-weight:500;color:var(--muted-foreground);">Selesai</span>
-      <span style="padding:6px;border-radius:8px;background:#f0fdf4;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      <span class="stat-badge-resolved" style="padding:6px;border-radius:8px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
       </span>
     </div>
-    <div style="font-size:30px;font-weight:700;color:#16a34a;"><%= _resolved %></div>
+    <div class="stat-text-resolved" style="font-size:30px;font-weight:700;"><%= _resolved %></div>
     <div style="font-size:12px;color:var(--muted-foreground);margin-top:4px;">Berhasil diselesaikan</div>
   </div>
 
@@ -135,11 +135,17 @@
           %>
           <tr style="border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--muted)'" onmouseout="this.style.background=''">
             <td style="padding:12px 16px;color:var(--muted-foreground);"><%= i + 1 %></td>
-            <td style="padding:12px 16px;font-weight:500;"><%= lap.room_name || '-' %></td>
+            <td style="padding:12px 16px;font-weight:500;width:260px;max-width:260px;word-break:break-word;line-height:1.35;"><%= lap.room_name || '-' %></td>
             <td style="padding:12px 16px;"><%= lap.reported_by_name || '-' %></td>
-            <td style="padding:12px 16px;color:var(--muted-foreground);max-width:200px;"><%= _trunc(lap.issue_description, 55) %></td>
+            <td style="padding:12px 16px;max-width:260px;" class="desc-cell">
+              <div class="short-desc line-clamp-2" style="color:var(--muted-foreground);"><%= lap.issue_description || '-' %></div>
+              <div class="full-desc" style="display:none;color:var(--foreground);white-space:pre-wrap;word-break:break-word;"><%= lap.issue_description || '-' %></div>
+              <% if (lap.issue_description && lap.issue_description.length > 40) { %>
+                <a href="javascript:void(0)" class="toggle-desc link-selengkapnya" style="margin-top:2px;display:none;" onclick="toggleInlineDesc(this, event)">Selengkapnya</a>
+              <% } %>
+            </td>
             <td style="padding:12px 16px;">
-              <span style="padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;background:<%= st.bg %>;color:<%= st.color %>;"><%= st.text %></span>
+              <span class="status-badge status-<%= lap.status %>" style="font-size:11px;"><%= st.text %></span>
             </td>
             <td style="padding:12px 16px;color:var(--muted-foreground);white-space:nowrap;"><%= _fmtDate(lap.reported_at) %></td>
           </tr>
@@ -153,5 +159,70 @@
     </table>
   </div>
 </div>
+
+<script>
+  function toggleInlineDesc(btn, event) {
+    if (event) event.stopPropagation();
+    const cell = btn.closest('.desc-cell');
+    if (!cell) return;
+
+    const shortDesc = cell.querySelector('.short-desc');
+    const fullDesc = cell.querySelector('.full-desc');
+    const isCurrentlyExpanded = fullDesc.style.display === 'block';
+
+    // 1. Collapse all other expanded description cells
+    document.querySelectorAll('.desc-cell').forEach(c => {
+      if (c !== cell) {
+        const sd = c.querySelector('.short-desc');
+        const fd = c.querySelector('.full-desc');
+        const toggleBtn = c.querySelector('.toggle-desc');
+        if (fd && fd.style.display === 'block') {
+          fd.style.display = 'none';
+          if (sd) sd.style.display = '-webkit-box';
+          if (toggleBtn) toggleBtn.textContent = 'Selengkapnya';
+        }
+      }
+    });
+
+    // 2. Toggle the state of the clicked cell
+    if (isCurrentlyExpanded) {
+      fullDesc.style.display = 'none';
+      shortDesc.style.display = '-webkit-box';
+      btn.textContent = 'Selengkapnya';
+    } else {
+      fullDesc.style.display = 'block';
+      shortDesc.style.display = 'none';
+      btn.textContent = 'Sembunyikan';
+    }
+  }
+
+  function adjustToggleLinks() {
+    document.querySelectorAll('.desc-cell').forEach(function(cell) {
+      const shortDesc = cell.querySelector('.short-desc');
+      const toggleLink = cell.querySelector('.toggle-desc');
+      if (shortDesc && toggleLink) {
+        // Use a 3px threshold to avoid false positives from subpixel rendering/rounding
+        if (shortDesc.scrollHeight - shortDesc.clientHeight > 3) {
+          toggleLink.style.display = 'inline-block';
+        } else {
+          toggleLink.style.display = 'none';
+        }
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', adjustToggleLinks);
+  } else {
+    adjustToggleLinks();
+  }
+  window.addEventListener('load', adjustToggleLinks);
+  window.addEventListener('resize', adjustToggleLinks);
+  if (document.fonts) {
+    document.fonts.ready.then(adjustToggleLinks);
+  }
+  document.addEventListener('htmx:afterSettle', adjustToggleLinks);
+  setTimeout(adjustToggleLinks, 100);
+</script>
 
 <%- include('partials/footer') %>

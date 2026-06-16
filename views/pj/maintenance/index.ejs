@@ -1,6 +1,7 @@
 <%- include('../../partials/header', {
   title:       'Permohonan Maintenance',
-  currentPath: '/maintenance',
+  currentPath: '/pj/maintenance',
+  maxWidth:    '100%',
   userRole:    typeof userRole !== 'undefined' ? userRole : '',
   userName:    typeof userName !== 'undefined' ? userName : '',
   flash:       typeof flash !== 'undefined' ? flash : null
@@ -13,6 +14,8 @@
   const _page       = typeof page  !== 'undefined' ? page  : 1;
   const _totalPages = typeof totalPages !== 'undefined' ? totalPages : 1;
   const _search     = typeof search !== 'undefined' ? search : '';
+  const _status     = typeof status !== 'undefined' ? status : '';
+  const _statusFilters = typeof statusFilters !== 'undefined' ? statusFilters : [];
 
   function fmtDate(d) {
     if (!d) return '-';
@@ -23,11 +26,12 @@
     return s.length > n ? s.substring(0, n) + '…' : s;
   }
   function buildQ(overrides) {
-    const q = Object.assign({ search: _search, page: _page }, overrides);
+    const q = Object.assign({ search: _search, status: _status, page: _page }, overrides);
     const p = [];
     if (q.search) p.push('search=' + encodeURIComponent(q.search));
+    if (q.status) p.push('status=' + encodeURIComponent(q.status));
     if (q.page > 1) p.push('page=' + q.page);
-    return '/maintenance' + (p.length ? '?' + p.join('&') : '');
+    return '/pj/maintenance' + (p.length ? '?' + p.join('&') : '');
   }
 %>
 
@@ -40,7 +44,7 @@
       <% if (_total > 0) { %>— <strong><%= _total %></strong> permohonan<% } %>
     </p>
   </div>
-  <a href="/maintenance/buat" class="btn"
+  <a href="/pj/maintenance/buat" class="btn"
      style="display:inline-flex;align-items:center;gap:6px;font-size:13px;">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -51,7 +55,8 @@
 
 <!-- Search bar -->
 <div class="card" style="padding:16px;margin-bottom:20px;">
-  <form method="GET" action="/maintenance" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+  <form method="GET" action="/pj/maintenance" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+    <!-- Search -->
     <div style="flex:1;min-width:200px;">
       <label style="display:block;font-size:12px;font-weight:600;color:var(--muted-foreground);margin-bottom:5px;">Cari Ruangan</label>
       <div style="position:relative;">
@@ -63,13 +68,23 @@
                class="input" style="padding-left:32px;height:36px;font-size:13px;width:100%;box-sizing:border-box;"/>
       </div>
     </div>
+    <!-- Status filter -->
+    <div style="min-width:160px;">
+      <label style="display:block;font-size:12px;font-weight:600;color:var(--muted-foreground);margin-bottom:5px;">Status</label>
+      <select name="status" class="input" style="height:36px;font-size:13px;width:100%;box-sizing:border-box;border:1px solid var(--border);background:var(--background);color:var(--foreground);border-radius:8px;outline:none;padding:0 10px;cursor:pointer;">
+        <% _statusFilters.forEach(function(sf) { %>
+        <option value="<%= sf.val %>" <%= _status === sf.val ? 'selected' : '' %>><%= sf.label %></option>
+        <% }); %>
+      </select>
+    </div>
+    <!-- Buttons -->
     <div style="display:flex;gap:6px;align-items:flex-end;">
       <button type="submit" class="btn" style="height:36px;font-size:13px;padding:0 16px;display:inline-flex;align-items:center;gap:6px;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         Cari
       </button>
-      <% if (_search) { %>
-      <a href="/maintenance" class="btn-outline"
+      <% if (_search || _status) { %>
+      <a href="/pj/maintenance" class="btn-outline"
          style="height:36px;font-size:13px;padding:0 14px;display:inline-flex;align-items:center;gap:6px;text-decoration:none;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         Reset
@@ -87,11 +102,17 @@
          style="margin:0 auto 12px;display:block;opacity:.4;">
       <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
     </svg>
-    <p style="font-size:14px;">Tidak ada permohonan maintenance aktif<% if (_search) { %> yang cocok<% } %>.</p>
-    <a href="/maintenance/buat" class="btn" style="margin-top:14px;display:inline-flex;align-items:center;gap:6px;font-size:13px;">
+    <p style="font-size:14px;">Tidak ada permohonan maintenance aktif<% if (_search || _status) { %> yang cocok dengan filter<% } %>.</p>
+    <% if (_search || _status) { %>
+    <a href="/pj/maintenance" class="btn-outline" style="margin-top:12px;display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-size:13px;">
+      Tampilkan Semua
+    </a>
+    <% } else { %>
+    <a href="/pj/maintenance/buat" class="btn" style="margin-top:14px;display:inline-flex;align-items:center;gap:6px;font-size:13px;">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Buat Permohonan Pertama
     </a>
+    <% } %>
   </div>
   <% } else { %>
   <div style="overflow-x:auto;">
@@ -100,9 +121,8 @@
         <tr style="border-bottom:1px solid var(--border);background:var(--muted);">
           <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);white-space:nowrap;">No</th>
           <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);">Ruangan</th>
-          <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);">Gedung</th>
+          <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);">Pelapor</th>
           <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);">Deskripsi</th>
-          <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);">Pengelola</th>
           <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);">Status</th>
           <th style="padding:10px 14px;text-align:center;font-weight:600;color:var(--muted-foreground);white-space:nowrap;">Log</th>
           <th style="padding:10px 14px;text-align:left;font-weight:600;color:var(--muted-foreground);white-space:nowrap;">Tgl Laporan</th>
@@ -117,18 +137,19 @@
         <tr style="border-bottom:1px solid var(--border);transition:background .1s;"
             onmouseover="this.style.background='var(--muted)'" onmouseout="this.style.background=''">
           <td style="padding:12px 14px;color:var(--muted-foreground);"><%= no %></td>
-          <td style="padding:12px 14px;font-weight:500;white-space:nowrap;">
+          <td style="padding:12px 14px;font-weight:500;width:260px;max-width:260px;word-break:break-word;line-height:1.35;">
             <%= m.room_name %>
             <% if (m.has_update) { %>
-            <span style="display:inline-flex;align-items:center;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:700;background:#7e22ce;color:#fff;margin-left:5px;letter-spacing:.03em;">UPDATE</span>
+            <span class="badge-update" style="margin-left:5px;display:inline-flex;vertical-align:middle;">UPDATE</span>
             <% } %>
           </td>
-          <td style="padding:12px 14px;color:var(--muted-foreground);white-space:nowrap;"><%= m.building_name %></td>
-          <td style="padding:12px 14px;max-width:180px;">
-            <span title="<%= m.issue_description %>"><%= trunc(m.issue_description, 45) %></span>
-          </td>
-          <td style="padding:12px 14px;white-space:nowrap;color:var(--muted-foreground);">
-            <%= m.pengelola_name || '<span style="font-style:italic;opacity:.6;">Belum ditugaskan</span>' %>
+          <td style="padding:12px 14px;color:var(--muted-foreground);white-space:nowrap;"><%= m.reported_by_name || '-' %></td>
+          <td style="padding:12px 14px;max-width:260px;" class="desc-cell">
+            <div class="short-desc line-clamp-2" style="color:var(--muted-foreground);"><%= m.issue_description || '-' %></div>
+            <div class="full-desc" style="display:none;color:var(--foreground);white-space:pre-wrap;word-break:break-word;"><%= m.issue_description || '-' %></div>
+            <% if (m.issue_description && m.issue_description.length > 40) { %>
+              <a href="javascript:void(0)" class="toggle-desc link-selengkapnya" style="margin-top:2px;display:none;" onclick="toggleInlineDesc(this, event)">Selengkapnya</a>
+            <% } %>
           </td>
           <td style="padding:12px 14px;white-space:nowrap;">
             <span class="status-badge status-<%= m.status %>">
@@ -144,7 +165,7 @@
           <td style="padding:12px 14px;white-space:nowrap;color:var(--muted-foreground);"><%= fmtDate(m.reported_at) %></td>
           <td style="padding:12px 14px;">
             <div style="display:inline-flex;gap:5px;justify-content:center;flex-wrap:wrap;">
-              <a href="/maintenance/<%= m.id %>"
+              <a href="/pj/maintenance/<%= m.id %>"
                  style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:500;border:1px solid var(--border);color:var(--foreground);text-decoration:none;background:var(--background);">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
                 Detail
@@ -188,5 +209,70 @@
   <% } %>
   <% } %>
 </div>
+
+<script>
+  function toggleInlineDesc(btn, event) {
+    if (event) event.stopPropagation();
+    const cell = btn.closest('.desc-cell');
+    if (!cell) return;
+
+    const shortDesc = cell.querySelector('.short-desc');
+    const fullDesc = cell.querySelector('.full-desc');
+    const isCurrentlyExpanded = fullDesc.style.display === 'block';
+
+    // 1. Collapse all other expanded description cells
+    document.querySelectorAll('.desc-cell').forEach(c => {
+      if (c !== cell) {
+        const sd = c.querySelector('.short-desc');
+        const fd = c.querySelector('.full-desc');
+        const toggleBtn = c.querySelector('.toggle-desc');
+        if (fd && fd.style.display === 'block') {
+          fd.style.display = 'none';
+          if (sd) sd.style.display = '-webkit-box';
+          if (toggleBtn) toggleBtn.textContent = 'Selengkapnya';
+        }
+      }
+    });
+
+    // 2. Toggle the state of the clicked cell
+    if (isCurrentlyExpanded) {
+      fullDesc.style.display = 'none';
+      shortDesc.style.display = '-webkit-box';
+      btn.textContent = 'Selengkapnya';
+    } else {
+      fullDesc.style.display = 'block';
+      shortDesc.style.display = 'none';
+      btn.textContent = 'Sembunyikan';
+    }
+  }
+
+  function adjustToggleLinks() {
+    document.querySelectorAll('.desc-cell').forEach(function(cell) {
+      const shortDesc = cell.querySelector('.short-desc');
+      const toggleLink = cell.querySelector('.toggle-desc');
+      if (shortDesc && toggleLink) {
+        // Use a 3px threshold to avoid false positives from subpixel rendering/rounding
+        if (shortDesc.scrollHeight - shortDesc.clientHeight > 3) {
+          toggleLink.style.display = 'inline-block';
+        } else {
+          toggleLink.style.display = 'none';
+        }
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', adjustToggleLinks);
+  } else {
+    adjustToggleLinks();
+  }
+  window.addEventListener('load', adjustToggleLinks);
+  window.addEventListener('resize', adjustToggleLinks);
+  if (document.fonts) {
+    document.fonts.ready.then(adjustToggleLinks);
+  }
+  document.addEventListener('htmx:afterSettle', adjustToggleLinks);
+  setTimeout(adjustToggleLinks, 100);
+</script>
 
 <%- include('../../partials/footer') %>

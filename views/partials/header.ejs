@@ -70,11 +70,411 @@
     .dark .status-in_progress { background-color: rgba(59,130,246,0.15); color: #60a5fa; border-color: rgba(59,130,246,0.25); }
     .dark .status-resolved { background-color: rgba(34,197,94,0.15); color: #4ade80; border-color: rgba(34,197,94,0.25); }
 
+    /* Button Responsive Info (Light Blue) */
+    .btn-resp-info {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      border: 1px solid #bfdbfe;
+      color: #1d4ed8;
+      background-color: #eff6ff;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background-color 0.15s, border-color 0.15s;
+    }
+    .btn-resp-info:hover {
+      background-color: #dbeafe;
+      border-color: #93c5fd;
+    }
+    .dark .btn-resp-info {
+      background-color: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      border-color: rgba(59, 130, 246, 0.3);
+    }
+    .dark .btn-resp-info:hover {
+      background-color: rgba(59, 130, 246, 0.25);
+      border-color: rgba(59, 130, 246, 0.45);
+    }
+
+    /* Button Responsive Danger (Light Red) */
+    .btn-resp-danger {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      border: 1px solid #fecaca;
+      color: #dc2626;
+      background-color: #fef2f2;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background-color 0.15s, border-color 0.15s;
+    }
+    .btn-resp-danger:hover {
+      background-color: #fee2e2;
+      border-color: #fca5a5;
+    }
+    .dark .btn-resp-danger {
+      background-color: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+    .dark .btn-resp-danger:hover {
+      background-color: rgba(239, 68, 68, 0.25);
+      border-color: rgba(239, 68, 68, 0.45);
+    }
+
+    /* Button Responsive Warning (Light Yellow/Orange) */
+    .btn-resp-warning {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      border: 1px solid #fde68a;
+      color: #a16207;
+      background-color: #fffbeb;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background-color 0.15s, border-color 0.15s;
+    }
+    .btn-resp-warning:hover {
+      background-color: #fef3c7;
+      border-color: #fcd34d;
+    }
+    .dark .btn-resp-warning {
+      background-color: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+    .dark .btn-resp-warning:hover {
+      background-color: rgba(245, 158, 11, 0.25);
+      border-color: rgba(245, 158, 11, 0.45);
+    }
+
+    /* Button Responsive Success Light (Light Green) */
+    .btn-resp-success-light {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      border: 1px solid #bbf7d0;
+      color: #15803d;
+      background-color: #f0fdf4;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background-color 0.15s, border-color 0.15s;
+    }
+    .btn-resp-success-light:hover {
+      background-color: #dcfce7;
+      border-color: #86efac;
+    }
+    .dark .btn-resp-success-light {
+      background-color: rgba(34, 197, 94, 0.15);
+      color: #4ade80;
+      border-color: rgba(34, 197, 94, 0.3);
+    }
+    .dark .btn-resp-success-light:hover {
+      background-color: rgba(34, 197, 94, 0.25);
+      border-color: rgba(34, 197, 94, 0.45);
+    }
+
+    /* Button Responsive Success Solid (Green) */
+    .btn-resp-success {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      border: 1px solid #16a34a;
+      color: #ffffff;
+      background-color: #16a34a;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background-color 0.15s, border-color 0.15s;
+    }
+    .btn-resp-success:hover {
+      background-color: #15803d;
+      border-color: #15803d;
+    }
+    .dark .btn-resp-success {
+      background-color: #22c55e;
+      border-color: #22c55e;
+      color: #000000;
+    }
+    .dark .btn-resp-success:hover {
+      background-color: #4ade80;
+      border-color: #4ade80;
+    }
+
+    /* Button Responsive Warning Solid */
+    .btn-resp-warning-solid {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      border: 1px solid #d97706;
+      color: #ffffff;
+      background-color: #d97706;
+      cursor: pointer;
+      transition: background-color 0.15s, border-color 0.15s;
+    }
+    .btn-resp-warning-solid:hover {
+      background-color: #b45309;
+      border-color: #b45309;
+    }
+    .dark .btn-resp-warning-solid {
+      background-color: #f59e0b;
+      border-color: #f59e0b;
+      color: #000000;
+    }
+    .dark .btn-resp-warning-solid:hover {
+      background-color: #fbbf24;
+      border-color: #fbbf24;
+    }
+
+    /* Log Status Badge & Dark Mode */
+    .log-status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 600;
+      border: 1px solid transparent;
+    }
+    .log-status-1 { background-color: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+    .log-status-2 { background-color: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+    .log-status-3 { background-color: #faf5ff; color: #7e22ce; border-color: #e9d5ff; }
+    .log-status-4 { background-color: #fff7ed; color: #c2410c; border-color: #fed7aa; }
+    .log-status-5 { background-color: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+
+    .dark .log-status-1 { background-color: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.25); }
+    .dark .log-status-2 { background-color: rgba(34, 197, 94, 0.15); color: #4ade80; border-color: rgba(34, 197, 94, 0.25); }
+    .dark .log-status-3 { background-color: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.25); }
+    .dark .log-status-4 { background-color: rgba(249, 115, 22, 0.15); color: #fb923c; border-color: rgba(249, 115, 22, 0.25); }
+    .dark .log-status-5 { background-color: rgba(34, 197, 94, 0.15); color: #4ade80; border-color: rgba(34, 197, 94, 0.25); }
+
+    /* Timeline Dots */
+    .timeline-dot {
+      position: absolute;
+      left: -24px;
+      top: 4px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid var(--background);
+    }
+    .timeline-dot-1 { background-color: #1d4ed8; box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.2); }
+    .timeline-dot-2 { background-color: #15803d; box-shadow: 0 0 0 2px rgba(21, 128, 61, 0.2); }
+    .timeline-dot-3 { background-color: #7e22ce; box-shadow: 0 0 0 2px rgba(126, 34, 206, 0.2); }
+    .timeline-dot-4 { background-color: #c2410c; box-shadow: 0 0 0 2px rgba(194, 65, 12, 0.2); }
+    .timeline-dot-5 { background-color: #15803d; box-shadow: 0 0 0 2px rgba(21, 128, 61, 0.2); }
+
+    .dark .timeline-dot-1 { background-color: #60a5fa; box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2); }
+    .dark .timeline-dot-2 { background-color: #4ade80; box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.2); }
+    .dark .timeline-dot-3 { background-color: #c084fc; box-shadow: 0 0 0 2px rgba(192, 132, 252, 0.2); }
+    .dark .timeline-dot-4 { background-color: #fb923c; box-shadow: 0 0 0 2px rgba(251, 146, 60, 0.2); }
+    .dark .timeline-dot-5 { background-color: #4ade80; box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.2); }
+
+    /* Timeline Cards */
+    .log-card {
+      background: var(--muted);
+      border-radius: 10px;
+      padding: 14px 16px;
+      border-left: 3px solid transparent;
+    }
+    .log-card-3 { border-left-color: #7e22ce; }
+    .log-card-4 { border-left-color: #d97706; }
+
+    .dark .log-card-3 { border-left-color: #c084fc; }
+    .dark .log-card-4 { border-left-color: #fb923c; }
+
+    /* Revisi Note Box */
+    .revisi-note-box {
+      background: #fff7ed;
+      border-radius: 6px;
+      padding: 10px 12px;
+      border: 1px solid #fed7aa;
+    }
+    .revisi-note-box .revisi-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #c2410c;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 4px;
+    }
+    .revisi-note-box .revisi-text {
+      font-size: 13.5px;
+      color: #92400e;
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .dark .revisi-note-box {
+      background: rgba(245, 158, 11, 0.1);
+      border-color: rgba(245, 158, 11, 0.25);
+    }
+    .dark .revisi-note-box .revisi-title {
+      color: #fbbf24;
+    }
+    .dark .revisi-note-box .revisi-text {
+      color: #fef08a;
+    }
+
+    /* Small badges */
+    .badge-new {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 7px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      background: #dc2626;
+      color: #fff;
+      margin-left: 5px;
+      letter-spacing: .03em;
+    }
+    .dark .badge-new {
+      background: #ef4444;
+      color: #000;
+    }
+
+    .badge-revisi {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 7px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      background: #d97706;
+      color: #fff;
+      margin-left: 5px;
+      letter-spacing: .03em;
+    }
+    .dark .badge-revisi {
+      background: #f59e0b;
+      color: #000;
+    }
+
+    .badge-update {
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 7px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      background: #7e22ce;
+      color: #fff;
+      margin-left: 5px;
+      letter-spacing: .03em;
+    }
+    .dark .badge-update {
+      background: #a855f7;
+      color: #000;
+    }
+
+    /* Progress Count badge */
+    .progress-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 32px;
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--muted);
+      color: var(--muted-foreground);
+    }
+    .progress-count.active {
+      background: #faf5ff;
+      color: #7e22ce;
+    }
+    .dark .progress-count.active {
+      background: rgba(168, 85, 247, 0.15);
+      color: #c084fc;
+    }
+    .progress-count.active-green {
+      background: #f0fdf4;
+      color: #15803d;
+    }
+    .dark .progress-count.active-green {
+      background: rgba(34, 197, 94, 0.15);
+      color: #4ade80;
+    }
+
+    /* Text Resolved Date */
+    .text-resolved-date {
+      color: #15803d;
+    }
+    .dark .text-resolved-date {
+      color: #4ade80;
+    }
+
+    /* Link Selengkapnya */
+    .link-selengkapnya {
+      color: #2563eb;
+      font-size: 12px;
+      font-weight: 500;
+      text-decoration: underline;
+    }
+    .dark .link-selengkapnya {
+      color: #60a5fa;
+    }
+
+    /* Stat Card Icon & Text Classes */
+    .stat-badge-reported { background-color: #fffbeb; }
+    .stat-badge-reported svg { stroke: #d97706; }
+    .stat-text-reported { color: #d97706; }
+    .dark .stat-badge-reported { background-color: rgba(245, 158, 11, 0.15); }
+    .dark .stat-badge-reported svg { stroke: #fbbf24; }
+    .dark .stat-text-reported { color: #fbbf24; }
+
+    .stat-badge-progress { background-color: #eff6ff; }
+    .stat-badge-progress svg { stroke: #2563eb; }
+    .stat-text-progress { color: #2563eb; }
+    .dark .stat-badge-progress { background-color: rgba(59, 130, 246, 0.15); }
+    .dark .stat-badge-progress svg { stroke: #60a5fa; }
+    .dark .stat-text-progress { color: #60a5fa; }
+
+    .stat-badge-resolved { background-color: #f0fdf4; }
+    .stat-badge-resolved svg { stroke: #16a34a; }
+    .stat-text-resolved { color: #16a34a; }
+    .dark .stat-badge-resolved { background-color: rgba(34, 197, 94, 0.15); }
+    .dark .stat-badge-resolved svg { stroke: #4ade80; }
+    .dark .stat-text-resolved { color: #4ade80; }
+
     aside nav ul li a[aria-current="page"] { font-weight:600; }
     .flash-bar { position:fixed;top:16px;right:16px;z-index:9999;min-width:280px;max-width:400px;padding:12px 16px;border-radius:10px;font-size:14px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.12);animation:slideIn .3s ease; }
     .flash-success { background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d; }
     .flash-error   { background:#fef2f2;border:1px solid #fecaca;color:#dc2626; }
     .flash-info    { background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8; }
+    .flash-warning { background:#fffbeb;border:1px solid #fde68a;color:#a16207; }
+
+    .dark .flash-success { background:rgba(34,197,94,0.15); border-color:rgba(34,197,94,0.25); color:#4ade80; }
+    .dark .flash-error   { background:rgba(239,68,68,0.15); border-color:rgba(239,68,68,0.25); color:#f87171; }
+    .dark .flash-info    { background:rgba(59,130,246,0.15); border-color:rgba(59,130,246,0.25); color:#60a5fa; }
+    .dark .flash-warning { background:rgba(245,158,11,0.15); border-color:rgba(245,158,11,0.25); color:#fbbf24; }
+
     @keyframes slideIn { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
     /* Badge notifikasi */
     .nav-badge {
@@ -82,6 +482,13 @@
       min-width:18px;height:18px;padding:0 5px;border-radius:999px;
       background:#dc2626;color:#fff;font-size:10px;font-weight:700;
       margin-left:auto;flex-shrink:0;
+    }
+    .nav-badge-purple {
+      background:#7e22ce;
+    }
+    .dark .nav-badge-purple {
+      background:#a855f7;
+      color:#000;
     }
   </style>
 </head>
@@ -102,6 +509,25 @@
 
 <!-- SIDEBAR -->
 <aside id="sidebar" class="sidebar" data-side="left" aria-hidden="false" data-breakpoint="768">
+  <script>
+    (() => {
+      try {
+        const saved = localStorage.getItem('sidebarOpen');
+        const isMobile = window.innerWidth < 768;
+        const aside = document.currentScript.parentElement;
+        if (saved !== null) {
+          const isOpen = saved === 'true';
+          if (isMobile) {
+            aside.setAttribute('aria-hidden', 'true');
+            aside.setAttribute('inert', '');
+          } else {
+            aside.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+            if (!isOpen) aside.setAttribute('inert', '');
+          }
+        }
+      } catch (e) {}
+    })();
+  </script>
   <nav aria-label="Sidebar navigation">
 
     <header>
@@ -121,7 +547,7 @@
         <h3 id="nav-main-lbl">Menu Utama</h3>
         <ul>
           <% if (typeof userRole !== 'undefined' && userRole === 'penanggung_jawab') { %>
-            <li><a href="/dashboard" <%= (typeof currentPath !== 'undefined' && currentPath === '/dashboard') ? 'aria-current="page"' : '' %>>
+            <li><a href="/pj/dashboard" <%= (typeof currentPath !== 'undefined' && currentPath === '/pj/dashboard') ? 'aria-current="page"' : '' %>>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
               Dashboard
             </a></li>
@@ -132,11 +558,11 @@
                 <span class="nav-badge"><%= badgeCounts.newLaporan %></span>
               <% } %>
             </a></li>
-            <li><a href="/maintenance" <%= (typeof currentPath !== 'undefined' && currentPath.startsWith('/maintenance')) ? 'aria-current="page"' : '' %>>
+            <li><a href="/pj/maintenance" <%= (typeof currentPath !== 'undefined' && currentPath.startsWith('/pj/maintenance')) ? 'aria-current="page"' : '' %>>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
               Permohonan Maintenance
               <% if (typeof badgeCounts !== 'undefined' && badgeCounts && badgeCounts.newMaintenance > 0) { %>
-                <span class="nav-badge"><%= badgeCounts.newMaintenance %></span>
+                <span class="nav-badge nav-badge-purple"><%= badgeCounts.newMaintenance %></span>
               <% } %>
             </a></li>
           <% } else if (typeof userRole !== 'undefined' && userRole === 'pengelola_aset') { %>
@@ -165,16 +591,22 @@
       </div>
     </section>
 
-    <footer>
-      <div style="padding:8px 12px 6px;">
-        <span class="role-badge role-<%= typeof userRole !== 'undefined' ? userRole : '' %>">
-          <% if (typeof userRole !== 'undefined' && userRole === 'penanggung_jawab') { %>Penanggung Jawab
-          <% } else if (typeof userRole !== 'undefined' && userRole === 'pengelola_aset') { %>Pengelola Aset
-          <% } else { %>Pengguna<% } %>
-        </span>
+    <footer style="padding:12px; border-top:1px solid var(--border); background:var(--sidebar-background);">
+      <div style="display:flex; align-items:center; gap:10px; padding:10px; border-radius:10px; background:var(--muted); border:1px solid var(--border); margin-bottom:8px;">
+        <div style="width:36px; height:36px; border-radius:50%; background:var(--primary); color:var(--primary-foreground); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <%= (typeof userName !== 'undefined' && userName) ? userName.charAt(0).toUpperCase() : 'U' %>
+        </div>
+        <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:1px;">
+          <div style="font-size:13px; font-weight:600; color:var(--foreground); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"><%= typeof userName !== 'undefined' ? userName : '' %></div>
+          <div style="font-size:11px; color:var(--muted-foreground); font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+            <% if (typeof userRole !== 'undefined' && userRole === 'penanggung_jawab') { %>Penanggung Jawab
+            <% } else if (typeof userRole !== 'undefined' && userRole === 'pengelola_aset') { %>Pengelola Aset
+            <% } else { %>Pengguna<% } %>
+          </div>
+        </div>
       </div>
-      <a href="/logout" class="btn-ghost w-full justify-start" style="font-size:13px;height:40px;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <a href="/logout" class="btn-ghost w-full justify-start" style="font-size:13px;height:36px;padding:0 10px;border-radius:8px;display:flex;align-items:center;color:var(--muted-foreground);transition:color 0.2s;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:8px;flex-shrink:0;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         Keluar
       </a>
     </footer>
@@ -192,24 +624,13 @@
       <span style="flex:1;font-size:15px;font-weight:600;"><%= typeof title !== 'undefined' ? title : '' %></span>
       <div style="display:flex;align-items:center;gap:10px;">
 
-        <!-- Theme variant selector -->
-        <select id="theme-select"
-                style="font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--background);color:var(--foreground);cursor:pointer;"
-                onchange="applyThemeVariant(this.value)"
-                title="Pilih tema warna">
-          <option value="">Default</option>
-          <option value="blue">Blue</option>
-          <option value="orange">Orange</option>
-          <option value="green">Green</option>
-          <option value="rose">Rose</option>
-          <option value="violet">Violet</option>
-          <option value="yellow">Yellow</option>
-        </select>
+
 
         <!-- Dark/light toggle -->
         <button type="button"
                 onclick="document.dispatchEvent(new CustomEvent('basecoat:theme'))"
                 class="btn-sm-icon-ghost size-8"
+                style="border: 1px solid var(--border);"
                 title="Toggle tema gelap/terang"
                 aria-label="Toggle dark mode">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -234,28 +655,5 @@
       </div>
     </div>
   </header>
-  <div style="padding:24px; max-width:1200px; margin:0 auto;">
+  <div style="padding:24px; max-width:<%= typeof maxWidth !== 'undefined' ? maxWidth : '1200px' %>; margin:0 auto;">
 
-<script>
-// Sinkronisasi theme-select dengan localStorage saat halaman dimuat
-(function() {
-  try {
-    const saved = localStorage.getItem('themeVariant') || '';
-    const sel = document.getElementById('theme-select');
-    if (sel) sel.value = saved;
-  } catch(_){}
-})();
-
-function applyThemeVariant(variant) {
-  // Hapus semua class theme-* yang ada
-  const html = document.documentElement;
-  const toRemove = Array.from(html.classList).filter(c => c.startsWith('theme-'));
-  toRemove.forEach(c => html.classList.remove(c));
-  if (variant) {
-    html.classList.add(`theme-${variant}`);
-    try { localStorage.setItem('themeVariant', variant); } catch(_){}
-  } else {
-    try { localStorage.removeItem('themeVariant'); } catch(_){}
-  }
-}
-</script>

@@ -2,29 +2,40 @@ const db = require('./lib/db');
 
 async function main() {
   try {
-    console.log('Tables in database:');
-    const [tables] = await db.query('SHOW TABLES');
-    console.log(tables);
+    console.log('--- VERIFICATION OF SEEDED TRANSACTION DATA ---');
+    
+    const [[{ count: totalRequests }]] = await db.query('SELECT COUNT(*) as count FROM room_maintenance_requests');
+    console.log(`Total Maintenance Requests: ${totalRequests}`);
 
-    console.log('\nColumns in room_maintenance_requests:');
-    const [cols] = await db.query('DESCRIBE room_maintenance_requests');
-    console.table(cols);
+    const [[{ count: totalLogs }]] = await db.query('SELECT COUNT(*) as count FROM room_maintenance_request_log');
+    console.log(`Total Request Logs: ${totalLogs}`);
 
-    console.log('\nColumns in rooms:');
-    const [roomCols] = await db.query('DESCRIBE rooms');
-    console.table(roomCols);
+    console.log('\nRequests grouped by Month & Status:');
+    const [stats] = await db.query(`
+      SELECT 
+        DATE_FORMAT(reported_at, '%Y-%m') AS month,
+        status, 
+        COUNT(*) as count 
+      FROM room_maintenance_requests 
+      GROUP BY month, status
+      ORDER BY month, status
+    `);
+    console.table(stats);
 
-    console.log('\nAll users:');
-    const [users] = await db.query('SELECT id, name, email FROM users');
-    console.table(users);
+    console.log('\nRequests grouped by PJ / Department:');
+    const [pjStats] = await db.query(`
+      SELECT 
+        e.name AS pj_name,
+        r.code AS room_code,
+        COUNT(rmr.id) as total_requests
+      FROM rooms r
+      JOIN employees e ON r.responsible_employee_id = e.id
+      LEFT JOIN room_maintenance_requests rmr ON rmr.room_id = r.id
+      GROUP BY pj_name, room_code
+      ORDER BY pj_name, room_code
+    `);
+    console.table(pjStats);
 
-    console.log('\nAll roles:');
-    const [roles] = await db.query('SELECT id, name FROM roles');
-    console.table(roles);
-
-    console.log('\nAll employees:');
-    const [employees] = await db.query('SELECT id, name, employee_number FROM employees');
-    console.table(employees);
   } catch (err) {
     console.error(err);
   } finally {

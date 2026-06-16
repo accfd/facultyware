@@ -29,16 +29,21 @@ const index = async (req, res, next) => {
   try {
     const pjEmployeeId = req.session.userId;
     const search = req.query.search || '';
+    const status = req.query.status || '';
     const page   = Math.max(1, parseInt(req.query.page) || 1);
     const offset = (page - 1) * PAGE_SIZE;
 
-    // Tampilkan semua status termasuk resolved agar PJ bisa download PDF selesai
-    // Filter: hanya ruangan yang menjadi tanggung jawab PJ ini
     const whereParts = [
-      "rmr.status IN ('in_progress', 'reported', 'resolved')",
       'r.responsible_employee_id = ?',
     ];
     const params = [pjEmployeeId];
+
+    if (status) {
+      whereParts.push('rmr.status = ?');
+      params.push(status);
+    } else {
+      whereParts.push("rmr.status IN ('in_progress', 'resolved')");
+    }
 
     if (search) {
       whereParts.push('r.name LIKE ?');
@@ -60,6 +65,7 @@ const index = async (req, res, next) => {
       `SELECT rmr.id, r.name AS room_name, b.name AS building_name,
               rmr.issue_description, rmr.status, rmr.reported_at,
               e_resp.name AS pengelola_name,
+              u.name AS reported_by_name,
               (SELECT COUNT(*) FROM room_maintenance_request_log
                WHERE room_maintenance_request_id = rmr.id) AS log_count,
               (SELECT status FROM room_maintenance_request_log
@@ -68,9 +74,10 @@ const index = async (req, res, next) => {
        FROM room_maintenance_requests rmr
        JOIN rooms r ON rmr.room_id = r.id
        JOIN buildings b ON r.building_id = b.id
+       JOIN users u ON rmr.reported_by = u.id
        LEFT JOIN employees e_resp ON rmr.employee_id = e_resp.id
        ${where}
-       ORDER BY rmr.reported_at DESC
+       ORDER BY has_update DESC, rmr.reported_at DESC
        LIMIT ? OFFSET ?`,
       [...params, PAGE_SIZE, offset]
     );
@@ -80,15 +87,23 @@ const index = async (req, res, next) => {
     const flash = req.session.flash || null;
     delete req.session.flash;
 
+    const statusFilters = [
+      { val: '',            label: 'Semua' },
+      { val: 'in_progress', label: 'Diproses' },
+      { val: 'resolved',    label: 'Selesai' },
+    ];
+
     res.render('pj/maintenance/index', {
       title:       'Permohonan Maintenance',
-      currentPath: '/maintenance',
+      currentPath: '/pj/maintenance',
       userRole:    req.session.userRole,
       userName:    req.session.userName,
       flash,
       maintenance,
       STATUS_INFO,
       search,
+      status,
+      statusFilters,
       page,
       totalPages,
       total,
@@ -105,9 +120,11 @@ const create = async (req, res, next) => {
 
     // Laporan yang statusnya masih reported, di ruangan tanggung jawab PJ ini
     const [laporan] = await db.query(
-      `SELECT rmr.id, r.name AS room_name, rmr.issue_description, rmr.reported_at
+      `SELECT rmr.id, r.name AS room_name, rmr.issue_description, rmr.reported_at,
+              u.name AS reported_by_name
        FROM room_maintenance_requests rmr
        JOIN rooms r ON rmr.room_id = r.id
+       JOIN users u ON rmr.reported_by = u.id
        WHERE rmr.status = 'reported'
          AND r.responsible_employee_id = ?
        ORDER BY rmr.reported_at DESC`,
@@ -119,7 +136,7 @@ const create = async (req, res, next) => {
 
     res.render('pj/maintenance/create', {
       title:            'Buat Permohonan Maintenance',
-      currentPath:      '/maintenance',
+      currentPath:      '/pj/maintenance',
       userRole:         req.session.userRole,
       userName:         req.session.userName,
       flash:            null,
@@ -143,9 +160,11 @@ const store = async (req, res, next) => {
 
   const renderForm = async (errs, old) => {
     const [laporan] = await db.query(
-      `SELECT rmr.id, r.name AS room_name, rmr.issue_description, rmr.reported_at
+      `SELECT rmr.id, r.name AS room_name, rmr.issue_description, rmr.reported_at,
+              u.name AS reported_by_name
        FROM room_maintenance_requests rmr
        JOIN rooms r ON rmr.room_id = r.id
+       JOIN users u ON rmr.reported_by = u.id
        WHERE rmr.status = 'reported'
          AND r.responsible_employee_id = ?
        ORDER BY rmr.reported_at DESC`,
@@ -153,7 +172,7 @@ const store = async (req, res, next) => {
     );
     return res.render('pj/maintenance/create', {
       title:       'Buat Permohonan Maintenance',
-      currentPath: '/maintenance',
+      currentPath: '/pj/maintenance',
       userRole:    req.session.userRole,
       userName:    req.session.userName,
       flash:       null,
@@ -217,7 +236,7 @@ const store = async (req, res, next) => {
     );
 
     req.session.flash = { type: 'success', message: 'Permohonan maintenance berhasil dibuat.' };
-    res.redirect('/maintenance');
+    res.redirect('/pj/maintenance');
   } catch (err) { next(err); }
 };
 
@@ -233,12 +252,12 @@ const show = async (req, res, next) => {
       `SELECT rmr.id, rmr.issue_description, rmr.status, rmr.reported_at, rmr.resolved_at,
               r.name AS room_name, r.code AS room_code,
               b.name AS building_name,
-              e_by.name AS reported_by_name,
+              u_by.name AS reported_by_name,
               e_pengelola.name AS pengelola_name
        FROM room_maintenance_requests rmr
        JOIN rooms r ON rmr.room_id = r.id
        JOIN buildings b ON r.building_id = b.id
-       JOIN employees e_by ON rmr.reported_by = e_by.id
+       JOIN users u_by ON rmr.reported_by = u_by.id
        LEFT JOIN employees e_pengelola ON rmr.employee_id = e_pengelola.id
        WHERE rmr.id = ? AND r.responsible_employee_id = ?`,
       [id, pjEmployeeId]
@@ -273,7 +292,7 @@ const show = async (req, res, next) => {
 
     res.render('pj/maintenance/show', {
       title:       `Maintenance #${String(id).padStart(5, '0')}`,
-      currentPath: '/maintenance',
+      currentPath: '/pj/maintenance',
       userRole:    req.session.userRole,
       userName:    req.session.userName,
       flash,
@@ -302,7 +321,7 @@ const close = async (req, res, next) => {
     );
     if (!laporan) {
       req.session.flash = { type: 'error', message: 'Permohonan tidak ditemukan atau bukan wewenang Anda.' };
-      return res.redirect('/maintenance');
+      return res.redirect('/pj/maintenance');
     }
 
     // Validasi: status dari log terakhir harus 3 (progres)
@@ -318,7 +337,7 @@ const close = async (req, res, next) => {
         type: 'error',
         message: 'Permohonan tidak dapat ditutup. Menunggu update progres perbaikan baru dari pengelola.',
       };
-      return res.redirect(`/maintenance/${id}`);
+      return res.redirect(`/pj/maintenance/${id}`);
     }
 
     // Update status laporan → resolved
@@ -339,7 +358,7 @@ const close = async (req, res, next) => {
     );
 
     req.session.flash = { type: 'success', message: 'Permohonan berhasil ditutup dan dinyatakan selesai.' };
-    res.redirect('/maintenance');
+    res.redirect('/pj/maintenance');
   } catch (err) { next(err); }
 };
 
@@ -356,7 +375,7 @@ const revisi = async (req, res, next) => {
       type: 'error',
       message: 'Catatan revisi wajib diisi minimal 10 karakter.',
     };
-    return res.redirect(`/maintenance/${id}`);
+    return res.redirect(`/pj/maintenance/${id}`);
   }
 
   try {
@@ -373,7 +392,7 @@ const revisi = async (req, res, next) => {
         type: 'error',
         message: 'Tidak dapat meminta revisi. Menunggu update progres perbaikan baru dari pengelola.',
       };
-      return res.redirect(`/maintenance/${id}`);
+      return res.redirect(`/pj/maintenance/${id}`);
     }
 
     // Validasi kepemilikan ruangan
@@ -385,7 +404,7 @@ const revisi = async (req, res, next) => {
     );
     if (!laporan) {
       req.session.flash = { type: 'error', message: 'Permohonan tidak ditemukan atau bukan wewenang Anda.' };
-      return res.redirect('/maintenance');
+      return res.redirect('/pj/maintenance');
     }
 
     // Insert log status=4 (revisi)
@@ -400,7 +419,7 @@ const revisi = async (req, res, next) => {
     // Status tetap in_progress, tidak diubah
 
     req.session.flash = { type: 'success', message: 'Catatan revisi berhasil dikirim ke pengelola.' };
-    res.redirect(`/maintenance/${id}`);
+    res.redirect(`/pj/maintenance/${id}`);
   } catch (err) { next(err); }
 };
 
