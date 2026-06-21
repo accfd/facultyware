@@ -12,6 +12,22 @@ function log(msg) { console.log(`\n[SEED-TRANS] ${msg}`); }
 function ok(msg)  { console.log(`  ✓  ${msg}`); }
 function skip(msg) { console.log(`  –  ${msg} (sudah ada, dilewati)`); }
 
+// Helper untuk memetakan deskripsi ke foto dummy kerusakan/progres yang sesuai
+function getDummyPhoto(desc, type = 'laporan') {
+  const d = desc.toLowerCase();
+  const suffix = type === 'laporan' ? '' : '_fix';
+  const folder = type === 'laporan' ? 'laporan' : 'progres';
+  
+  if (d.includes('ac') || d.includes('kipas') || d.includes('air') || d.includes('pipa') || d.includes('wastafel')) {
+    return `/uploads/${folder}/dummy_ac${suffix}.png`;
+  }
+  if (d.includes('kursi') || d.includes('meja') || d.includes('papan') || d.includes('pintu') || d.includes('engsel') || d.includes('plafon') || d.includes('atap') || d.includes('cat') || d.includes('dinding') || d.includes('jendela')) {
+    return `/uploads/${folder}/dummy_kursi${suffix}.png`;
+  }
+  // Default untuk elektronik / listrik / yang lainnya
+  return `/uploads/${folder}/dummy_stopkontak${suffix}.png`;
+}
+
 async function main() {
   log('Starting transaction database seeding...');
 
@@ -138,7 +154,7 @@ async function main() {
         date: '2026-05-29 08:45:00',
         resolvedDate: '2026-05-30 13:15:00'
       },
-
+  
       // ─── JUNI 2026 ───
       // Minggu 1
       {
@@ -288,11 +304,12 @@ async function main() {
       
       // Log 1: Laporan Dibuat (Status: 1)
       logId++;
+      const reportedPhoto = getDummyPhoto(r.desc, 'laporan');
       await db.query(
         `INSERT INTO room_maintenance_request_log
-           (id, room_maintenance_request_id, log, logged_by, logged_at, description, status, created_at, updated_at)
-         VALUES (?, ?, 'Laporan dibuat', ?, ?, ?, 1, ?, ?)`,
-        [logId, requestId, reporterId, r.date, r.desc, r.date, r.date]
+           (id, room_maintenance_request_id, log, logged_by, logged_at, log_file, description, status, created_at, updated_at)
+         VALUES (?, ?, 'Laporan dibuat', ?, ?, ?, ?, 1, ?, ?)`,
+        [logId, requestId, reporterId, r.date, reportedPhoto, r.desc, r.date, r.date]
       );
 
       // Log 2: Diterima oleh PJ (Status: 2) jika status != reported
@@ -309,11 +326,12 @@ async function main() {
         // Log 3: Progres Perbaikan oleh Pengelola (Status: 3)
         const progressDate = new Date(new Date(r.date).getTime() + 2 * 60 * 60 * 1000); // +2 Jam
         logId++;
+        const progressPhoto = getDummyPhoto(r.desc, 'progres');
         await db.query(
           `INSERT INTO room_maintenance_request_log
-             (id, room_maintenance_request_id, log, logged_by, logged_at, description, status, created_at, updated_at)
-           VALUES (?, ?, 'Progres perbaikan berjalan', ?, ?, 'Pengecekan dan perbaikan awal oleh tim pengelola.', 3, ?, ?)`,
-          [logId, requestId, pengelolaId, progressDate, progressDate, progressDate]
+             (id, room_maintenance_request_id, log, logged_by, logged_at, log_file, description, status, created_at, updated_at)
+           VALUES (?, ?, 'Progres perbaikan berjalan', ?, ?, ?, 'Pengecekan dan perbaikan awal oleh tim pengelola.', 3, ?, ?)`,
+          [logId, requestId, pengelolaId, progressDate, progressPhoto, progressDate, progressDate]
         );
 
         // Log 4: Revisi oleh PJ jika ada hasRevision (Status: 4)

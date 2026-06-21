@@ -552,13 +552,17 @@ const permohonanMaintenance = async (req, res, next) => {
       });
     }
 
-    // Ambil tanggal maintenance dibuat (log status=1)
+    // Ambil tanggal maintenance dibuat (log status=1) dan foto kerusakan awal
     const [[firstLog]] = await db.query(
-      `SELECT logged_at FROM room_maintenance_request_log
+      `SELECT logged_at, log_file FROM room_maintenance_request_log
        WHERE room_maintenance_request_id = ? AND status = 1
        ORDER BY created_at ASC LIMIT 1`,
       [id]
     );
+
+    const photoUrl = firstLog && firstLog.log_file ? firstLog.log_file : null;
+    const imgPath = photoUrl ? path.join(__dirname, '../public', photoUrl) : null;
+    const hasPhoto = imgPath && fs.existsSync(imgPath);
 
     const doc      = initDoc();
     const filename = `permohonan-maintenance-MNT-${String(id).padStart(5, '0')}.pdf`;
@@ -611,7 +615,26 @@ const permohonanMaintenance = async (req, res, next) => {
     doc.y = boxY + descH;
     doc.moveDown(0.5);
 
+    // Render foto jika dilampirkan pelapor
+    if (hasPhoto) {
+      doc.moveDown(0.4);
+      checkPageBreak(doc, 190);
+      doc.fontSize(12).font('Cambria-Bold').text('Foto Kerusakan', 40);
+      doc.moveTo(40, doc.y + 1).lineTo(555, doc.y + 1).lineWidth(0.5).stroke('#CCCCCC');
+      doc.moveDown(0.5);
+
+      try {
+        doc.image(imgPath, { fit: [240, 160] });
+        doc.moveDown(0.5);
+      } catch (e) {
+        doc.fontSize(11).font('Cambria-Italic').fillColor('#888888').text('Gagal memuat foto kerusakan.');
+        doc.fillColor('#000000');
+        doc.moveDown(0.5);
+      }
+    }
+
     // Kolom tanda tangan
+    checkPageBreak(doc, 110);
     doc.fontSize(12).font('Cambria-Bold').text('Persetujuan', 40);
     doc.moveTo(40, doc.y + 1).lineTo(555, doc.y + 1).lineWidth(0.5).stroke('#CCCCCC');
     doc.moveDown(0.4);
@@ -630,7 +653,9 @@ const permohonanMaintenance = async (req, res, next) => {
     addPageNumbers(doc);
     doc.end();
   } catch (err) { next(err); }
+  // block finished
 };
+
 
 // ══════════════════════════════════════════════════════════════════════════════
 // D. PDF LAPORAN HASIL PERBAIKAN — untuk Pengelola Aset
@@ -723,22 +748,60 @@ const hasilPerbaikan = async (req, res, next) => {
       doc.moveDown(0.4);
     });
 
-    doc.moveDown(0.3);
+    // Ambil foto kerusakan awal (log status=1)
+    const [[initialLog]] = await db.query(
+      `SELECT log_file FROM room_maintenance_request_log
+       WHERE room_maintenance_request_id = ? AND status = 1
+       ORDER BY created_at ASC LIMIT 1`,
+      [id]
+    );
 
-    // Deskripsi kerusakan
+    const initialPhotoUrl = initialLog && initialLog.log_file ? initialLog.log_file : null;
+    const initialImgPath = initialPhotoUrl ? path.join(__dirname, '../public', initialPhotoUrl) : null;
+    const hasInitialPhoto = initialImgPath && fs.existsSync(initialImgPath);
+
+    // Deskripsi kerusakan awal
     doc.fontSize(12).font('Cambria-Bold').text('Deskripsi Kerusakan Awal', 40);
     doc.moveTo(40, doc.y + 1).lineTo(555, doc.y + 1).lineWidth(0.5).stroke('#CCCCCC');
     doc.moveDown(0.3);
-    const descH = doc.heightOfString(laporan.issue_description, { width: 501, fontSize: 11 }) + 14;
+
     const boxY2 = doc.y;
-    doc.rect(40, boxY2, 515, descH).fill('#FFF8F0');
-    doc.fontSize(11).font('Cambria').fillColor('#000000')
-       .text(laporan.issue_description, 47, boxY2 + 7, { width: 501 });
-    doc.y = boxY2 + descH;
+    if (hasInitialPhoto) {
+      const descH = doc.heightOfString(laporan.issue_description, { width: 381, fontSize: 11 }) + 14;
+      const totalH = Math.max(descH, 80);
+      
+      checkPageBreak(doc, totalH + 20);
+      const curY = doc.y;
+      
+      // Box deskripsi kiri
+      doc.rect(40, curY, 395, totalH).fillAndStroke('#FFF8F0', '#E5E7EB');
+      doc.fontSize(11).font('Cambria').fillColor('#000000')
+         .text(laporan.issue_description, 47, curY + 7, { width: 381 });
+         
+      // Box foto kerusakan kanan (lurus/sejajar dengan kolom Foto di tabel progres bawah: x=445, w=110)
+      doc.rect(445, curY, 110, totalH).fillAndStroke('#F9FAFB', '#E5E7EB');
+      try {
+        doc.image(initialImgPath, 450, curY + 5, { fit: [100, totalH - 10], align: 'center', valign: 'center' });
+      } catch (e) {
+        doc.fontSize(9).font('Cambria-Italic').fillColor('#888888').text('Gagal memuat foto', 445, curY + (totalH - 10) / 2, { width: 110, align: 'center' });
+        doc.fillColor('#000000');
+      }
+      doc.y = curY + totalH;
+    } else {
+      const descH = doc.heightOfString(laporan.issue_description, { width: 501, fontSize: 11 }) + 14;
+      checkPageBreak(doc, descH + 20);
+      const curY = doc.y;
+      
+      doc.rect(40, curY, 515, descH).fillAndStroke('#FFF8F0', '#E5E7EB');
+      doc.fontSize(11).font('Cambria').fillColor('#000000')
+         .text(laporan.issue_description, 47, curY + 7, { width: 501 });
+      doc.y = curY + descH;
+    }
     doc.moveDown(0.5);
+    doc.fillColor('#000000'); // Reset warna isi agar teks di bawahnya terlihat hitam
 
     // Tabel progres
-    doc.fontSize(12).font('Cambria-Bold')
+    doc.fontSize(12).font('Cambria-Bold').fillColor('#000000')
        .text(`Rekap Progres Perbaikan (${progresOnly.length} update)`, 40);
     doc.moveTo(40, doc.y + 1).lineTo(555, doc.y + 1).lineWidth(0.5).stroke('#CCCCCC');
     doc.moveDown(0.3);
