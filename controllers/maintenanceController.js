@@ -8,13 +8,13 @@ const STATUS_INFO = {
   resolved:    { text: 'Selesai',    bg: '#f0fdf4', color: '#15803d',  border: '#bbf7d0' },
 };
 
-// ── Helper: ambil employee_id dari userId session ──────────────────────────────
+// Helper: Ambil employee_id berdasarkan userId session
 async function getEmployeeId(userId) {
   const [[emp]] = await db.query('SELECT id FROM employees WHERE id = ?', [userId]);
   return emp ? emp.id : null;
 }
 
-// ── Helper: generate id log baru (MAX+1) ──────────────────────────────────────
+// Helper: Dapatkan ID log berikutnya
 async function nextLogId() {
   const [[{ nid }]] = await db.query(
     'SELECT COALESCE(MAX(id), 0) + 1 AS nid FROM room_maintenance_request_log'
@@ -22,9 +22,7 @@ async function nextLogId() {
   return nid;
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// GET /maintenance  — daftar permohonan (termasuk resolved agar PDF tetap bisa diakses)
-// ══════════════════════════════════════════════════════════════════════════════
+// GET /maintenance - Daftar permohonan maintenance
 const index = async (req, res, next) => {
   try {
     const pjEmployeeId = req.session.userId;
@@ -111,14 +109,12 @@ const index = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-// ══════════════════════════════════════════════════════════════════════════════
-// GET /maintenance/buat  — form buat permohonan (laporan dari ruangan tanggung jawab PJ)
-// ══════════════════════════════════════════════════════════════════════════════
+// GET /maintenance/buat - Halaman form buat permohonan maintenance
 const create = async (req, res, next) => {
   try {
     const pjEmployeeId = req.session.userId;
 
-    // Laporan yang statusnya masih reported, di ruangan tanggung jawab PJ ini
+    // Ambil laporan berstatus 'reported' pada ruangan tanggung jawab PJ ini
     const [laporan] = await db.query(
       `SELECT rmr.id, r.name AS room_name, rmr.issue_description, rmr.reported_at,
               u.name AS reported_by_name
@@ -131,7 +127,7 @@ const create = async (req, res, next) => {
       [pjEmployeeId]
     );
 
-    // Pre-select laporan jika ada ?laporan_id dari tombol di halaman detail laporan
+    // Pre-select ID laporan jika ada di parameter query
     const selectedLaporanId = req.query.laporan_id || '';
 
     res.render('pj/maintenance/create', {
@@ -147,14 +143,12 @@ const create = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-// ══════════════════════════════════════════════════════════════════════════════
-// POST /maintenance  — simpan permohonan (auto-assign pengelola LIMIT 1)
-// ══════════════════════════════════════════════════════════════════════════════
+// POST /maintenance - Simpan permohonan (auto-assign pengelola)
 const store = async (req, res, next) => {
   const pjEmployeeId = req.session.userId;
   const { laporan_id } = req.body;
 
-  // Validasi
+  // Validasi input
   const errors = [];
   if (!laporan_id) errors.push({ field: 'laporan_id', msg: 'Laporan wajib dipilih.' });
 
@@ -185,22 +179,7 @@ const store = async (req, res, next) => {
   if (errors.length > 0) return renderForm(errors, { laporan_id });
 
   try {
-    // Cek laporan masih reported dan dalam ruangan tanggung jawab PJ ini
-    const [[laporan]] = await db.query(
-      `SELECT rmr.id FROM room_maintenance_requests rmr
-       JOIN rooms r ON rmr.room_id = r.id
-       WHERE rmr.id = ? AND rmr.status = 'reported'
-         AND r.responsible_employee_id = ?`,
-      [laporan_id, pjEmployeeId]
-    );
-    if (!laporan) {
-      return renderForm(
-        [{ field: 'laporan_id', msg: 'Laporan tidak ditemukan atau sudah diproses.' }],
-        { laporan_id }
-      );
-    }
-
-    // Auto-assign: ambil pengelola_aset pertama yang ditemukan
+    // Cari pengelola aset pertama untuk auto-assign tugas
     const [[pengelola]] = await db.query(
       `SELECT e.id
        FROM employees e
@@ -211,14 +190,7 @@ const store = async (req, res, next) => {
        LIMIT 1`
     );
 
-    if (!pengelola) {
-      return renderForm(
-        [{ field: 'laporan_id', msg: 'Tidak ada pengelola aset yang tersedia di sistem.' }],
-        { laporan_id }
-      );
-    }
-
-    // 1. Update status laporan → in_progress, assign pengelola otomatis
+    // 1. Update status laporan ke 'in_progress' dan pasang pengelola
     await db.query(
       `UPDATE room_maintenance_requests
        SET status = 'in_progress', employee_id = ?, updated_at = NOW()
@@ -226,7 +198,7 @@ const store = async (req, res, next) => {
       [pengelola.id, laporan_id]
     );
 
-    // 2. Insert log
+    // 2. Catat log status permohonan dibuat (status = 1)
     const logId = await nextLogId();
     await db.query(
       `INSERT INTO room_maintenance_request_log
@@ -240,9 +212,7 @@ const store = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-// ══════════════════════════════════════════════════════════════════════════════
-// GET /maintenance/:id  — detail permohonan + timeline log
-// ══════════════════════════════════════════════════════════════════════════════
+// GET /maintenance/:id - Detail permohonan & timeline perkembangan
 const show = async (req, res, next) => {
   try {
     const pjEmployeeId = req.session.userId;
@@ -280,10 +250,10 @@ const show = async (req, res, next) => {
       [id]
     );
 
-    // Cek apakah ada progres (status=3) → untuk enable tombol Close & Revisi
+    // Cek keberadaan progres (status = 3) untuk membolehkan aksi revisi/tutup
     const hasProgress = logs.some(lg => lg.status === 3);
 
-    // Cek apakah status dari log terakhir adalah 3 (Progres)
+    // Cek apakah log terakhir merupakan update progres dari pengelola
     const lastLog = logs.length > 0 ? logs[logs.length - 1] : null;
     const canAction = lastLog && lastLog.status === 3;
 
@@ -305,9 +275,7 @@ const show = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-// ══════════════════════════════════════════════════════════════════════════════
-// POST /maintenance/:id/close  — tutup permohonan (selesai)
-// ══════════════════════════════════════════════════════════════════════════════
+// POST /maintenance/:id/close - Tutup permohonan (Selesai)
 const close = async (req, res, next) => {
   const pjEmployeeId = req.session.userId;
   const { id } = req.params;
@@ -324,7 +292,7 @@ const close = async (req, res, next) => {
       return res.redirect('/pj/maintenance');
     }
 
-    // Validasi: status dari log terakhir harus 3 (progres)
+    // Pastikan log terakhir berstatus progres (status = 3)
     const [latestLogs] = await db.query(
       `SELECT status FROM room_maintenance_request_log
        WHERE room_maintenance_request_id = ?
@@ -340,7 +308,7 @@ const close = async (req, res, next) => {
       return res.redirect(`/pj/maintenance/${id}`);
     }
 
-    // Update status laporan → resolved
+    // Update status laporan ke 'resolved'
     await db.query(
       `UPDATE room_maintenance_requests
        SET status = 'resolved', resolved_at = NOW(), updated_at = NOW()
@@ -348,7 +316,7 @@ const close = async (req, res, next) => {
       [id]
     );
 
-    // Insert log status=5 (selesai)
+    // Catat log penyelesaian permohonan (status = 5)
     const logId = await nextLogId();
     await db.query(
       `INSERT INTO room_maintenance_request_log
@@ -362,9 +330,7 @@ const close = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-// ══════════════════════════════════════════════════════════════════════════════
-// POST /maintenance/:id/revisi  — minta revisi
-// ══════════════════════════════════════════════════════════════════════════════
+// POST /maintenance/:id/revisi - Minta revisi hasil pekerjaan
 const revisi = async (req, res, next) => {
   const pjEmployeeId = req.session.userId;
   const { id }    = req.params;
@@ -379,7 +345,7 @@ const revisi = async (req, res, next) => {
   }
 
   try {
-    // Validasi: status dari log terakhir harus 3 (progres) sebelum boleh minta revisi
+    // Pastikan log terakhir berstatus progres (status = 3) sebelum meminta revisi
     const [latestLogs] = await db.query(
       `SELECT status FROM room_maintenance_request_log
        WHERE room_maintenance_request_id = ?
@@ -407,7 +373,7 @@ const revisi = async (req, res, next) => {
       return res.redirect('/pj/maintenance');
     }
 
-    // Insert log status=4 (revisi)
+    // Catat log permintaan revisi (status = 4)
     const logId = await nextLogId();
     await db.query(
       `INSERT INTO room_maintenance_request_log
@@ -415,8 +381,6 @@ const revisi = async (req, res, next) => {
        VALUES (?, ?, 'Revisi diminta', ?, NOW(), ?, 4, NOW(), NOW())`,
       [logId, id, pjEmployeeId, catatan.trim()]
     );
-
-    // Status tetap in_progress, tidak diubah
 
     req.session.flash = { type: 'success', message: 'Catatan revisi berhasil dikirim ke pengelola.' };
     res.redirect(`/pj/maintenance/${id}`);

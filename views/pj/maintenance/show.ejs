@@ -111,14 +111,27 @@
 
     <!-- Tombol Close -->
     <% if (_hasProg && typeof canAction !== 'undefined' && canAction) { %>
-    <form method="POST" action="/pj/maintenance/<%= _l.id %>/close"
-          onsubmit="return confirm('Yakin ingin menutup permohonan ini dan menyatakannya SELESAI? Tindakan tidak dapat dibatalkan.')">
-      <button type="submit" class="btn-resp-success"
-              style="font-size:13px;">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-        Tutup & Nyatakan Selesai
-      </button>
-    </form>
+    <button type="button" onclick="document.getElementById('confirm-close-dialog').showModal()" class="btn-resp-success"
+            style="font-size:13px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      Tutup & Nyatakan Selesai
+    </button>
+
+    <dialog id="confirm-close-dialog" class="dialog" aria-labelledby="confirm-close-dialog-title" aria-describedby="confirm-close-dialog-description">
+      <div>
+        <header>
+          <h2 id="confirm-close-dialog-title">Apakah Anda benar-benar yakin?</h2>
+          <p id="confirm-close-dialog-description">Tindakan ini tidak dapat dibatalkan. Ini akan menutup permohonan maintenance ini dan menyatakannya selesai secara permanen.</p>
+        </header>
+
+        <footer>
+          <button type="button" class="btn-outline" onclick="document.getElementById('confirm-close-dialog').close()">Batal</button>
+          <form method="POST" action="/pj/maintenance/<%= _l.id %>/close" style="display: inline;">
+            <button type="submit" class="btn-primary" style="background-color: var(--primary); color: var(--primary-foreground);">Ya, Selesaikan</button>
+          </form>
+        </footer>
+      </div>
+    </dialog>
     <% } else { %>
     <button type="button" disabled
             style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:500;border:1px solid var(--border);color:var(--muted-foreground);background:var(--muted);cursor:not-allowed;"

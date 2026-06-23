@@ -2,30 +2,23 @@ const db = require('../lib/db');
 
 const PAGE_SIZE = 10;
 
-// ── Helper: ambil reporter id dari userId session ─────────────────────────────
-// Mendukung dua jenis pengguna: employees (dosen/staf) dan students (mahasiswa).
-// Keduanya memakai users.id sebagai primary key di tabel masing-masing,
-// sehingga userId session langsung dipakai sebagai reported_by.
+// Helper: Ambil ID Pelapor (mahasiswa/dosen) berdasarkan userId session
 async function getEmployeeId(userId) {
-  // Cek tabel employees terlebih dahulu (dosen, staf, penanggung jawab)
   const [[emp]] = await db.query('SELECT id FROM employees WHERE id = ?', [userId]);
   if (emp) return emp.id;
 
-  // Jika tidak ada di employees, cek tabel students (mahasiswa)
   const [[stu]] = await db.query('SELECT id FROM students WHERE id = ?', [userId]);
   return stu ? stu.id : null;
 }
 
-// ── Helper: format status badge info ──────────────────────────────────────────
+// Helper: Format warna badge status laporan
 const STATUS_INFO = {
   reported:    { text: 'Dilaporkan', bg: '#fffbeb', color: '#a16207',  border: '#fde68a' },
   in_progress: { text: 'Diproses',   bg: '#eff6ff', color: '#1d4ed8',  border: '#bfdbfe' },
   resolved:    { text: 'Selesai',    bg: '#f0fdf4', color: '#15803d',  border: '#bbf7d0' },
 };
 
-// ══════════════════════════════════════════════════════════════════════════════
-// GET /laporan  — daftar laporan milik user yang login
-// ══════════════════════════════════════════════════════════════════════════════
+// GET /laporan - Daftar laporan pribadi
 const index = async (req, res, next) => {
   try {
     const employeeId = await getEmployeeId(req.session.userId);
@@ -38,7 +31,7 @@ const index = async (req, res, next) => {
     const page     = Math.max(1, parseInt(req.query.page) || 1);
     const offset   = (page - 1) * PAGE_SIZE;
 
-    // Build WHERE
+    // Filter query berdasarkan status
     const whereClauses = ['rmr.reported_by = ?'];
     const params       = [employeeId];
     if (status && ['reported', 'in_progress', 'resolved'].includes(status)) {
@@ -85,9 +78,7 @@ const index = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-// ══════════════════════════════════════════════════════════════════════════════
-// GET /laporan/buat  — form buat laporan
-// ══════════════════════════════════════════════════════════════════════════════
+// GET /laporan/buat - Halaman form buat laporan
 const create = async (req, res, next) => {
   try {
     const [rooms] = await db.query(
@@ -113,16 +104,12 @@ const create = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-// ══════════════════════════════════════════════════════════════════════════════
-// POST /laporan  — simpan laporan baru
-// ══════════════════════════════════════════════════════════════════════════════
+// POST /laporan - Simpan laporan baru
 const store = async (req, res, next) => {
-  // Jika multer error (file bukan gambar / terlalu besar) sudah ditangani di route,
-  // tapi kita juga tangkap di sini jika diteruskan
   const { room_id, issue_description } = req.body;
   const foto = req.file ? `/uploads/laporan/${req.file.filename}` : null;
 
-  // ── Validasi manual ──────────────────────────────────────────────────────
+  // Validasi input manual
   const errors = [];
   if (!room_id) errors.push({ field: 'room_id', msg: 'Ruangan wajib dipilih.' });
   if (!issue_description || issue_description.trim().length < 20)
@@ -159,7 +146,7 @@ const store = async (req, res, next) => {
     const employeeId = await getEmployeeId(req.session.userId);
     if (!employeeId) return res.redirect('/login');
 
-    // Validasi room_id ada di DB
+    // Validasi keberadaan ruangan di database
     const [[room]] = await db.query('SELECT id, responsible_employee_id FROM rooms WHERE id = ?', [room_id]);
     if (!room) {
       const [rooms] = await db.query(
@@ -176,7 +163,7 @@ const store = async (req, res, next) => {
       });
     }
 
-    // INSERT laporan
+    // Insert data laporan baru
     const [result] = await db.query(
       `INSERT INTO room_maintenance_requests
          (room_id, reported_by, issue_description, status, reported_at, employee_id, created_at, updated_at)
@@ -185,7 +172,7 @@ const store = async (req, res, next) => {
     );
     const newId = result.insertId;
 
-    // INSERT log pertama (status=1: dibuat), sertakan foto jika ada
+    // Catat log pertama status=1 (Laporan dibuat)
     const [[{ nextId }]] = await db.query(
       'SELECT COALESCE(MAX(id), 0) + 1 AS nextId FROM room_maintenance_request_log'
     );
@@ -201,9 +188,7 @@ const store = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-// ══════════════════════════════════════════════════════════════════════════════
-// GET /laporan/:id  — detail laporan (hanya milik sendiri)
-// ══════════════════════════════════════════════════════════════════════════════
+// GET /laporan/:id - Detail laporan pribadi
 const show = async (req, res, next) => {
   try {
     const employeeId = await getEmployeeId(req.session.userId);

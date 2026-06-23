@@ -20,7 +20,7 @@ const badgeMiddleware   = require('./middlewares/badge');
 
 var app = express();
 
-// View engine
+// Konfigurasi View Engine
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
@@ -31,7 +31,7 @@ app.use(cookieParser());
 app.use(methodOverride('_method'));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Session store — tabel express_sessions (terpisah dari sessions Laravel)
+// Konfigurasi Session Store MySQL
 const sessionStore = new MySQLStore({
   host:     process.env.DB_HOST,
   port:     parseInt(process.env.DB_PORT) || 3306,
@@ -56,16 +56,32 @@ app.use(session({
   cookie: { maxAge: 1000 * 60 * 60 * 24, httpOnly: true },
 }));
 
-// Badge middleware global (setelah session)
+// Middleware: Simpan session ke DB sebelum redirect (hindari bug flash message)
+app.use((req, res, next) => {
+  const originalRedirect = res.redirect;
+  res.redirect = function (...args) {
+    if (req.session && typeof req.session.save === 'function') {
+      req.session.save((err) => {
+        if (err) console.error('Session save error during redirect:', err);
+        originalRedirect.apply(res, args);
+      });
+    } else {
+      originalRedirect.apply(res, args);
+    }
+  };
+  next();
+});
+
+// Middleware Global Badge
 app.use(badgeMiddleware);
 
-// Middleware untuk menonaktifkan cache pada respons HTML agar flash message tidak berulang saat navigasi
+// Middleware: Nonaktifkan cache HTML (hindari flash message berulang saat back/forward)
 app.use((req, res, next) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   next();
 });
 
-// Routes
+// Registrasi Route
 app.use('/',            indexRouter);
 app.use('/pj/dashboard',   dashboardRouter);
 app.use('/laporan',     laporanRouter);
@@ -75,8 +91,10 @@ app.use('/penugasan',   pengelolaRouter);
 app.use('/progres',     progresRouter);
 app.use('/api/v1',      apiRouter);
 
-// 404 & error handler
+// Handler Error 404 & Global Error
 app.use(notFoundHandler);
 app.use(errorHandler);
+
+module.exports = app;
 
 module.exports = app;

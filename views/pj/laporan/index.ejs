@@ -251,13 +251,26 @@
               <% } %>
               <!-- Hapus -->
               <% if (l.status === 'reported') { %>
-              <form method="POST" action="/pj/laporan/<%= l.id %>?_method=DELETE" style="display:inline;"
-                    onsubmit="return confirm('Yakin ingin menghapus laporan ini? Tindakan tidak dapat dibatalkan.')">
-                <input type="hidden" name="_method" value="DELETE"/>
-                <button type="submit" class="action-btn action-btn-delete" title="Hapus Laporan">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                </button>
-              </form>
+              <button type="button" onclick="document.getElementById('delete-dialog-<%= l.id %>').showModal()" class="action-btn action-btn-delete" title="Hapus Laporan">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+              </button>
+
+              <dialog id="delete-dialog-<%= l.id %>" class="dialog" aria-labelledby="delete-dialog-title-<%= l.id %>" aria-describedby="delete-dialog-description-<%= l.id %>">
+                <div>
+                  <header>
+                    <h2 id="delete-dialog-title-<%= l.id %>">Apakah Anda yakin?</h2>
+                    <p id="delete-dialog-description-<%= l.id %>">Tindakan ini tidak dapat dibatalkan. Ini akan menghapus laporan untuk ruangan <strong><%= l.room_name %></strong> secara permanen.</p>
+                  </header>
+
+                  <footer>
+                    <button type="button" class="btn-outline" onclick="document.getElementById('delete-dialog-<%= l.id %>').close()">Batal</button>
+                    <form method="POST" action="/pj/laporan/<%= l.id %>?_method=DELETE" style="display:inline;">
+                      <input type="hidden" name="_method" value="DELETE"/>
+                      <button type="submit" class="btn-primary" style="background-color: var(--primary); color: var(--primary-foreground);">Ya, Hapus</button>
+                    </form>
+                  </footer>
+                </div>
+              </dialog>
               <% } %>
             </div>
           </td>
